@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "name": "Yogesh Sharma",
+        "email": "ys@gmail.com",
+        "pass": "qwerty1234",
+        "role": "Admin",
+        "sheets": {
+            "MasterSheet": {
+                "exclude_columns": [
+                    "view_all"
+                ],
+                "editable_columns": [
+                    "view_all"
+                ]
+            },
+            "WorkSheet": {
+                "exclude_columns": [
+                    "view_all"
+                ],
+                "editable_columns": [
+                    "view_all"
+                ]
+            }
+        }
+    },
+    {
+        "id": 2,
+        "name": "Rishabh Vyas",
+        "email": "abc@mail.com",
+        "pass": "qaz",
+        "role": "Employee",
+        "sheets": {
+            "MasterSheet": {
+                "exclude_columns": [
+                    "Book Title",
+                    "Author Name",
+                    "Writing"
+                ],
+                "editable_columns": [
+                    "Email Adress",
+                    "Author Detail",
+                    "Confirmation",
+                    "Amazon Link "
+                ]
+            },
+            "WorkSheet": {
+                "exclude_columns": [
+                    "Topic"
+                ],
+                "editable_columns": [
+                    "Plag"
+                ]
+            },
+            "Math": {
+                "exclude_columns": [
+                    "Topic"
+                ],
+                "editable_columns": [
+                    "Module"
+                ]
+            }
+        }
+    },
+    {
+        "id": 3,
+        "name": "John Doe",
+        "email": "john@gmail.com",
+        "pass": "qazxcv",
+        "role": "Employee",
+        "sheets": {
+            "WorkSheet": {
+                "exclude_columns": [
+                    "S No.",
+                    "Work Discription"
+                ],
+                "editable_columns": [
+                    "Status",
+                    "Plag"
+                ]
+            },
+            "Math": {
+                "exclude_columns": [
+                    "Module"
+                ],
+                "editable_columns": [
+                    "Usage in Machine Learning"
+                ]
+            }
+        }
+    }
+]

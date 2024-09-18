@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Data</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 10px;
+            margin-top: 32px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 11px;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        th {
+            background-color: #266cad;
+            color: white;
+            text-align: center;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        .filter-row input, .filter-row .input-daterange input {
+            width: 100%;
+        }
+        .filter-row th {
+            vertical-align: middle;
+        }
+        .filter-input, .date-filter-input {
+            display: none;
+        }
+        .table-wrapper::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background-color: #888;
+            border-radius: 10px;
+            border: 3px solid #f1f1f1;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background-color: #555;
+        }
+        .navbar-custom {
+            background-color: #266cad;
+            box-shadow: 0px 7px 5px 0px rgba(0,0,0,0.1);
+            padding: 0.22rem 1rem;
+        }
+        .navbar-brand {
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+        }
+        .navbar-nav .nav-item {
+            margin-left: 1rem;
+        }
+        .nav-link {
+            font-size: 13px;
+            font-weight: bold;
+            color: white;
+        }
+        .fa-trash-alt {
+            font-size: .8 rem;
+            color: rgb(167, 11, 11);
+        }
+
+        .dropdown-item {
+            padding: 0.25rem 0;
+            margin-right: auto;
+        }
+
+        .d-flex.justify-content-between.align-items-center.px-3 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+
+    </style>
+</head>
+<body>
+<span id="hiddenSheetName" style="display: none;">{{ current_sheet_name }}</span>
+
+
+<nav class="navbar navbar-expand-lg navbar-light navbar-custom fixed-top">
+    <!-- Add the logo here -->
+    <a class="navbar-brand" href="#">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height: 30px; margin-right: 8px;">
+    </a>
+    <a class="navbar-brand" id="currentSheetName" href="#" style="color:white;">{{ current_sheet_name }}</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            <!-- <li class="nav-item">
+                <a class="nav-link" href="#" onclick="addRow()" style="color:white;">Add Row</a>
+            </li> -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="sheetDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:white;">
+                    Sheets
+                </a>
+                <div class="dropdown-menu" aria-labelledby="sheetDropdown">
+                    {% if session['user_role'] == 'Admin' %}
+                        {% for sheet_name, sheet_id in sheets.items() %}
+                        <div class="d-flex justify-content-between align-items-center px-3">
+                            <a class="dropdown-item p-0" href="#" onclick="selectSheet('{{ sheet_id }}', '{{ sheet_name }}')">{{ sheet_name }}</a>
+                            <a href="#" class="text-danger ml-2" onclick="deleteSheet('{{ sheet_name }}')"><i class="fas fa-trash-alt"></i></a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% for sheet_name, sheet_id in user_sheets.items() %}
+                        <a class="dropdown-item p-0" href="#" onclick="selectSheet('{{ sheet_id }}', '{{ sheet_name }}')">{{ sheet_name }}</a>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </li>            
+            <li class="nav-item">
+                {% if session['user_role'] == 'Admin' %}
+                <a class="nav-link" href="#" data-toggle="modal" data-target="#addSheetModal" style="color:white;">Add Sheet</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/access_control" style="color:white;">Access Control</a>
+            </li>
+                {% endif %}
+            <li class="nav-item">
+                <a class="nav-link btn-logout" href="/logout" style="color:white;"><i class="fa fa-power-off"></i> Logout</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="table-wrapper">
+                <table class="table table-bordered" id="dataTable">
+                    <thead>
+                        <tr>
+                            {% for col_name in values[0] %}
+                            <th>
+                                {{ col_name }}
+                                {% if col_name not in ['Date'] %}
+                                <span onclick="toggleFilterInput(this)" style="cursor: pointer;">
+                                    <img src="https://img.icons8.com/material-outlined/24/ffffff/filter.png" alt="Filter" width="16" height="16">
+                                </span>
+                                <input type="text" placeholder="Filter" class="filter-input" onkeyup="filterTable('{{ col_name }}', this.value)">
+                                {% endif %}
+                                {% if col_name == 'Date' %}
+                                <span onclick="toggleDateFilterInput(this)" style="cursor: pointer;">
+                                    <img src="https://img.icons8.com/material-outlined/24/ffffff/calendar.png" alt="Filter" width="16" height="16">
+                                </span>
+                                <div class="date-filter-input input-daterange input-group" style="display:none;">
+                                    <input type="text" class="form-control" id="start-date" placeholder="Start Date">
+                                    <input type="text" class="form-control" id="end-date" placeholder="End Date">
+                                    <button type="button" class="btn btn-primary" onclick="filterTableByDate()">Filter</button>
+                                </div>
+                                {% endif %}
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in values[1:] %}
+                        <tr>
+                            {% for cell in row %}
+                            <td contenteditable="{{ 'true' if loop.index0 in editable_indices else 'false' }}">{{ cell }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            {% for i in range(columns) %}
+                            <td contenteditable="{{ 'true' if i in editable_indices else 'false' }}"></td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addSheetModal" tabindex="-1" role="dialog" aria-labelledby="addSheetModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSheetModalLabel">Add New Sheet</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addSheetForm">
+                    <div class="form-group">
+                        <label for="sheetName">Sheet Name</label>
+                        <input type="text" class="form-control" id="sheetName" name="sheet_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sheetId">Sheet ID</label>
+                        <input type="text" class="form-control" id="sheetId" name="sheet_id" required>
+                        <small id="sheetIdError" class="form-text text-danger" style="display:none;">Sheet ID must be exactly 44 characters long.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Sheet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1" role="dialog" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body" id="feedbackMessage"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+<script>
+
+
+    document.querySelectorAll('td[contenteditable="true"]').forEach(function(cell) {
+                cell.addEventListener('blur', function() {
+                    var row = cell.parentNode.rowIndex + 1;
+                    var col = cell.cellIndex + 1;
+                    var value = cell.textContent;
+
+                    // Always call updateCell, even if the value is empty
+                    if (row === document.querySelectorAll('tr').length) {
+                        // This is the last row (new data row)
+                        addNewData(row, col, value);
+                    } else {
+                        updateCell(row, col, value);
+                    }
+                });
+            });
+
+            function updateCell(row, col, value) {
+                fetch('/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'row=' + row + '&col=' + col + '&value=' + encodeURIComponent(value),
+                });
+            }
+
+        function addNewData(row, col, value) {
+            var newRow = [];
+            var cells = document.querySelectorAll('tr:last-child td');
+            cells.forEach(function(cell) {
+                newRow.push(cell.textContent);
+            });
+
+            fetch('/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'data=' + JSON.stringify(newRow),
+            }).then(function(response) {
+                return response.text();
+            }).then(function(text) {
+                console.log(text);
+                location.reload(); // Reload the page to get the updated data
+            }).catch(function(error) {
+                console.error(error);
+            });
+        }
+
+        function selectSheet(sheetId, sheetName) {
+    // Update the current sheet name in the UI
+    document.getElementById('currentSheetName').innerText = 'Now Showing: ' + sheetName;
+
+    // Perform the post request to select the sheet
+    $.post('/select_sheet/' + sheetId, { sheet_name: sheetName }, function() {
+        location.reload();  // Reload to reflect the changes
+    });
+}
+
+
+    document.getElementById('addSheetForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const sheetIdInput = document.getElementById('sheetId');
+    const sheetIdError = document.getElementById('sheetIdError');
+    const sheetId = sheetIdInput.value;
+
+    if (sheetId.length !== 44) {  
+        sheetIdError.style.display = 'block';
+        return;
+    } else {
+        sheetIdError.style.display = 'none';
+    }
+
+    $.post('/sheets', $(this).serialize())
+    .done(function(response) {
+        $('#addSheetModal').modal('hide');  // Close the Add Sheet modal
+
+        // Show feedback after modal is fully hidden
+        $('#addSheetModal').on('hidden.bs.modal', function () {
+            showFeedback("Sheet added successfully!");
+        });
+
+        // Dynamically update the sheet list
+        updateSheetList(response.sheet_name, response.sheet_id);
+    })
+
+    .fail(function(response) {
+        showFeedback("Failed to add sheet. Please try again.");
+    });
+});
+
+function showFeedback(message) {
+    $('#feedbackMessage').text(message);
+    $('#feedbackModal').modal('show');
+}
+
+function updateSheetList(sheetName, sheetId) {
+    const sheetSelect = document.getElementById('sheetSelect');  // Assuming this is the select element for sheets
+    const newOption = document.createElement('option');
+    newOption.value = sheetId;
+    newOption.textContent = sheetName;
+    sheetSelect.appendChild(newOption);
+
+    // Optionally select the newly added sheet
+    sheetSelect.value = sheetId;
+}
+
+    
+    $(document).ready(function(){
+            $('.input-daterange').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true
+            });
+
+            // Set initial sheet name if available
+            var sheetName = document.getElementById('hiddenSheetName').innerText;
+            if (sheetName) {
+                document.getElementById('currentSheetName').innerText =  sheetName;
+            }
+        });
+
+    function toggleFilterInput(icon) {
+        var input = icon.nextElementSibling;
+        if (input.style.display === "none" || input.style.display === "") {
+            input.style.display = "inline-block";
+            input.focus();
+            icon.style.color = "white";
+        } else {
+            input.style.display = "none";
+            input.value = '';
+            icon.style.color = "white";
+            filterTable(icon.previousElementSibling.textContent.trim(), '');
+        }
+    }
+
+    function toggleDateFilterInput(icon) {
+        var inputGroup = icon.parentElement.querySelector('.date-filter-input');
+        if (inputGroup.style.display === "none" || inputGroup.style.display === "") {
+            inputGroup.style.display = "flex";
+        } else {
+            inputGroup.style.display = "none";
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            filterTableByDate();
+        }
+    }
+
+        function deleteSheet(sheetName) {
+        if (confirm(`Are you sure you want to delete the sheet: ${sheetName}?`)) {
+            fetch(`/delete_sheet/${sheetName}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if (response.status === 204) {
+                    location.reload();  // Reload the page after deletion
+                } else if (response.status === 404) {
+                    alert('Sheet not found.');
+                } else {
+                    alert('Failed to delete the sheet.');
+                }
+            });
+        }
+    }
+
+    function filterTable(colName, filterValue) {
+        var table, rows, i, j, cell, showRow;
+        table = document.getElementById("dataTable");
+        rows = table.getElementsByTagName("tr");
+        var colIndex = getColumnIndex(colName);
+
+        for (i = 1; i < rows.length; i++) {
+            showRow = false;
+            cell = rows[i].getElementsByTagName("td")[colIndex];
+            if (cell) {
+                if (cell.textContent.toLowerCase().includes(filterValue.toLowerCase())) {
+                    showRow = true;
+                }
+            }
+            rows[i].style.display = showRow ? "" : "none";
+        }
+    }
+
+    function filterTableByDate() {
+        var table, rows, i, cell, showRow;
+        var startDate = new Date(document.getElementById('start-date').value);
+        var endDate = new Date(document.getElementById('end-date').value);
+        table = document.getElementById("dataTable");
+        rows = table.rows;
+        var colIndex = getColumnIndex('Date');
+
+        for (i = 1; i < rows.length; i++) {
+            showRow = false;
+            cell = rows[i].getElementsByTagName("TD")[colIndex];
+            if (cell) {
+                var cellDate = new Date(cell.innerHTML);
+                if ((!isNaN(startDate.getTime()) && cellDate >= startDate) &&
+                    (!isNaN(endDate.getTime()) && cellDate <= endDate) ||
+                    (isNaN(startDate.getTime()) && isNaN(endDate.getTime()))) {
+                    showRow = true;
+                } else if (isNaN(startDate.getTime()) && cellDate <= endDate) {
+                    showRow = true;
+                } else if (isNaN(endDate.getTime()) && cellDate >= startDate) {
+                    showRow = true;
+                }
+            }
+            rows[i].style.display = showRow ? "" : "none";
+        }
+    }
+
+    function getColumnIndex(columnName) {
+        var headerCells = document.querySelectorAll('#dataTable th');
+        for (var i = 0; i < headerCells.length; i++) {
+            if (headerCells[i].innerText.includes(columnName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+</script>
+</body>
+</html>

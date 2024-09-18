@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <title>Admin Panel</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+      .container {
+        max-width: 1050px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        position: relative; /* Make the container the reference point for positioning */
+      }
+      h1 {
+        text-align: center;
+        color: #0f0000;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+      th,
+      td {
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+      }
+      th {
+        background-color: #266cad;
+        color: white;
+        font-weight: normal;
+        padding: 10px;
+      }
+      #access-control-btn {
+        display: block;
+        margin: 20px auto;
+        padding: 8px 23px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        text-align: center;
+      }
+      #access-control-btn:hover {
+        background-color: #555;
+      }
+      #logout-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: transparent;
+        border: none;
+        font-size: 24px;
+        color: #d51314;
+        cursor: pointer;
+        transition: color 0.3s;
+      }
+      #logout-btn:hover {
+        color: #555;
+      }
+
+      .popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        overflow: auto;
+        padding: 20px; /* Adds padding for mobile devices */
+      }
+
+      /* Popup content */
+      .popup-content {
+        background: #fff;
+        padding: 30px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        width: 800px; /* Wider form */
+        max-width: 90%; /* Responsive design */
+        border-radius: 10px;
+        position: relative; /* Allows positioning of close button */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-height: 85vh; /* Restricts the height */
+        overflow-y: auto; /* Adds scrolling if content exceeds form height */
+        margin: 0; /* Center form vertically */
+      }
+
+      /* Close button styling */
+      .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 25px;
+        cursor: pointer;
+        color: #888;
+        transition: color 0.3s;
+        z-index: 10; /* Ensures it is visible over content */
+      }
+
+      .close-btn:hover {
+        color: #333;
+      }
+
+      /* Form styling */
+      form {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(
+          2,
+          1fr
+        ); /* Two columns for most form elements */
+        gap: 32px; /* Gap between elements */
+      }
+
+      /* Full width elements */
+      .full-width {
+        grid-column: span 2; /* Full width items */
+      }
+
+      /* Input and select styling */
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      input[type="number"],
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: normal; /* Regular text */
+        transition: border-color 0.3s;
+        margin-top: 5px;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: #266cad; /* Focus color */
+        outline: none;
+      }
+
+      /* Modern select styling */
+      select {
+        appearance: none;
+        background-color: #fff;
+        padding-right: 30px;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBvbHlnb24gcG9pbnRzPSIxMiAxNyA1IDkgMTkgOSIgc3R5bGU9ImZpbGw6I2ZmZiIvPjwvc3ZnPg=="); /* Down arrow */
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 12px;
+      }
+
+      /* Checkbox container styling */
+      .checkbox-container {
+        display: flex;
+        flex-wrap: wrap; /* Checkboxes appear horizontally */
+        gap: 5px; /* Space between checkboxes */
+        margin-top: 5px;
+      }
+
+      /* Custom checkboxes */
+      .checkbox-container input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: #f0f0f0;
+        width: 10px; /* Decreased size */
+        height: 10px; /* Decreased size */
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        position: relative;
+        cursor: pointer;
+        margin-right: 8px;
+      }
+
+      .checkbox-container input[type="checkbox"]:checked {
+        background-color: #266cad;
+        border-color: #266cad;
+      }
+
+      .checkbox-container input[type="checkbox"]:checked::after {
+        content: "\2714"; /* Unicode for check mark */
+        font-size: 12px;
+        color: white;
+        position: absolute;
+        left: 1px; /* Adjusted for smaller checkbox size */
+        top: -1px;
+      }
+
+      /* Label styling */
+      label {
+        font-weight: normal; /* Regular text */
+        margin-bottom: 5px;
+        display: block;
+      }
+
+      /* Button styling */
+      button {
+        padding: 10px 20px;
+        background-color: #266cad;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      /* Submit button styling */
+      button[type="submit"] {
+        padding: 12px 25px;
+        background-color: #266cad;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+        margin-top: 10px;
+      }
+      button[type="submit"]:hover {
+        background-color: #266cad;
+      }
+
+      input,
+      button {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+      }
+      input:focus {
+        border-color: #333;
+        outline: none;
+      }
+      button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      button:hover {
+        background-color: #333;
+      }
+      .edit-btn,
+      .delete-btn {
+        padding: 3px 8px;
+        margin: 2px;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        display: inline-block;
+        min-width: 35px;
+        text-align: center;
+      }
+      .edit-btn {
+        background-color: #266cad;
+        color: white;
+      }
+      .delete-btn {
+        background-color: #266cad;
+        color: white;
+      }
+      .password-container {
+        display: flex;
+        align-items: center;
+      }
+      .password-mask {
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-right: 10px;
+      }
+      #back-btn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: transparent;
+        border: none;
+        font-size: 24px;
+        color: #333;
+        cursor: pointer;
+        transition: color 0.3s;
+      }
+      #back-btn:hover {
+        color: #266cad;
+      }
+      /* buefybuefb ------------------------------------*/
+
+      .collapsible-row {
+        display: none;
+      }
+
+      .expand-btn {
+        background: none;
+        border: none;
+        color: blue;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+
+      .sheet-details {
+        margin: 10px 0;
+        padding: 10px;
+        border-top: 1px solid #ccc;
+        background-color: #f9f9f9;
+      }
+
+      td,
+      th {
+        padding: 10px;
+        border: 1px solid #ddd;
+      }
+
+      button {
+        padding: 5px 10px;
+        margin: 0 5px;
+      }
+
+      .expand-btn {
+        background-color: transparent; /* Remove background color */
+        border: none; /* Remove border */
+        color: #266cad; /* A clean, non-default blue (change this to any color you prefer) */
+        cursor: pointer; /* Keep the pointer cursor */
+        text-decoration: none; /* Remove underline */
+        padding: 5px 10px; /* Add some padding for a button-like appearance */
+        border-radius: 4px; /* Rounded corners */
+      }
+
+      .expand-btn:hover {
+        color: #0056b3; /* Change hover color to a darker shade */
+        background-color: #f1f1f1; /* Light background on hover */
+        text-decoration: none; /* Ensure underline doesn’t appear on hover */
+        transition: background-color 0.3s, color 0.3s; /* Smooth transition */
+      }
+
+      .sheet-details {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start; /* Align details to the left */
+        /* max-height: 300px; /*Limit the height */
+        /* overflow-y: auto; Enable scroll for long content */
+        padding: 15px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      /* Ensure the entire sheet details section is left-aligned */
+      .sheet-container {
+        text-align: left; /* Force left alignment for sheet content */
+        padding-left: 20px; /* Adjust spacing for better alignment */
+        margin-bottom: 15px; /* Maintain spacing between sheets */
+        border-bottom: 1px solid #ddd; /* Optional: separating line between sheets */
+      }
+
+      /* Align all sheet details text to the left */
+      .sheet-details {
+        text-align: left; /* Ensure all details are left-aligned */
+        word-wrap: break-word; /* Prevent overflow */
+      }
+
+      /* Adjust headers (like sheet name) for left alignment */
+      .sheet-container h4 {
+        margin: 0; /* Ensure no extra spacing above */
+        padding-bottom: 5px; /* Small padding for cleaner look */
+      }
+
+      .sheet-container p {
+        margin: 0; /* Remove margin to avoid extra spacing */
+        padding-bottom: 5px; /* Adjust padding between lines */
+      }
+
+      /* Ensure the entire row expands fully and avoids overlapping */
+      tr.collapsible-row td {
+        padding: 0; /* Remove padding in collapsible row */
+        text-align: left; /* Align content to the left */
+      }
+      .sheet-container:last-child {
+        border-bottom: none; /* Remove border for last item */
+      }
+
+      /* Sheet name highlighting */
+      .sheet-container .sheet-name {
+        font-weight: bold; /* Make the sheet name bold */
+        font-size: 1.1em; /* Slightly larger font size */
+        color: #266cad; /* Blue text color */
+        border-bottom: 2px solid #266cad; /* Optional underline */
+        padding-bottom: 5px; /* Add space between the text and underline */
+        margin-bottom: 10px; /* Margin to create space below the sheet name */
+      }
+
+      /* Optional: Subtle background highlight */
+      .sheet-container .sheet-name {
+        background-color: #ffffff; /* Light blue background */
+        padding: 5px 10px; /* Padding around the text */
+        border-radius: 5px; /* Rounding for a soft edge look */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <button id="back-btn" onclick="window.location.href='/'">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <button id="logout-btn" onclick="window.location.href='/logout'">
+        <i class="fas fa-power-off"></i>
+      </button>
+      <h1>Admin Panel</h1>
+      <button id="access-control-btn">Add User</button>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Password</th>
+            <th>Role</th>
+            <th>Sheets</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="user-table">
+          {% for user in users %}
+          <tr data-user-id="{{ user.id }}">
+            <td>{{ user.id }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <div class="password-container">
+                <span class="password-mask">********</span>
+                <i
+                  class="fas fa-eye"
+                  style="cursor: pointer"
+                  onclick="togglePasswordVisibility(this, '{{ user.pass }}')"
+                ></i>
+              </div>
+            </td>
+            <td>{{ user.role }}</td>
+            <td>
+              <button class="expand-btn">
+                View Sheets ({{ user.sheets | length }})
+              </button>
+            </td>
+            <td>
+              <button class="edit-btn" data-id="{{ user.id }}">Edit</button>
+              <button class="delete-btn" data-id="{{ user.id }}">Delete</button>
+            </td>
+          </tr>
+          <tr class="collapsible-row" style="display: none">
+            <td colspan="7">
+              <div class="sheet-details">
+                {% for sheet_name, sheet_info in user.sheets.items() %}
+                <div class="sheet-container">
+                  <h4 class="sheet-name">{{ sheet_name }}</h4>
+                  <p>
+                    <strong>Exclude Columns:</strong> {{
+                    sheet_info.exclude_columns | join(', ') }}
+                  </p>
+                  <p>
+                    <strong>Editable Columns:</strong> {{
+                    sheet_info.editable_columns | join(', ') }}
+                  </p>
+                </div>
+                {% endfor %}
+              </div>
+            </td>
+          </tr>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div id="popup" class="popup">
+      <div class="popup-content">
+        <span class="close-btn">&times;</span>
+        <h2 id="popup-title">Add New User</h2>
+        <form id="user-form">
+          <div>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required />
+          </div>
+          <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+          <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required />
+          </div>
+          <div>
+            <label for="role">Role:</label>
+            <input type="text" id="role" name="role" required />
+          </div>
+
+          <!-- Container to hold multiple sheet sections -->
+          <div id="sheets-container">
+            <!-- A single sheet block will go here -->
+            <div class="sheet-block">
+              <div class="full-width">
+                <label for="sheet_name_0">Sheet Name:</label>
+                <select id="sheet_name_0" name="sheet_name_0" required>
+                  <option value="">Select a sheet</option>
+                  <!-- Options will be dynamically populated -->
+                </select>
+              </div>
+              <div class="full-width">
+                <label for="exclude-columns_0">Exclude Columns:</label>
+                <div id="exclude-columns_0" class="checkbox-container"></div>
+              </div>
+              <div class="full-width">
+                <label for="editable-columns_0">Editable Columns:</label>
+                <div id="editable-columns_0" class="checkbox-container"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Button to add more sheets -->
+          <button type="button" id="add-sheet" class="full-width">
+            Add Sheet
+          </button>
+
+          <button type="submit" class="full-width">Submit</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const accessControlBtn = document.getElementById("access-control-btn");
+        const popup = document.getElementById("popup");
+        const closeBtn = document.querySelector(".close-btn");
+        const userForm = document.getElementById("user-form");
+        const sheetsContainer = document.getElementById("sheets-container");
+        const userTable = document.getElementById("user-table");
+        let sheetCount = 0; // To track the number of sheet sections
+        let editMode = false;
+        let editUserId = null;
+
+        function initializeSheetSelectOptions(sheets, selectElement) {
+          if (!selectElement) {
+            console.error("Select element not found");
+            return;
+          }
+
+          sheets.forEach((sheet) => {
+            const option = document.createElement("option");
+            option.value = sheet;
+            option.textContent = sheet;
+            selectElement.appendChild(option);
+          });
+        }
+
+        // Fetch available sheets and initialize the first dropdown on page load
+        fetch("/get_sheets")
+          .then((response) => response.json())
+          .then((sheets) => {
+            const firstSheetDropdown = document.getElementById("sheet_name_0");
+            initializeSheetSelectOptions(sheets, firstSheetDropdown);
+          })
+          .catch((error) => console.error("Error fetching sheets:", error));
+
+        // Add Sheet Button click event
+        document.getElementById("add-sheet").addEventListener("click", () => {
+          sheetCount++;
+          addSheetSection(sheetCount);
+        });
+
+        function addSheetSection(sheetIndex) {
+          const sheetBlock = document.createElement("div");
+          sheetBlock.classList.add("sheet-block");
+          sheetBlock.id = `sheet-block-${sheetIndex}`;
+
+          const sheetNameDiv = document.createElement("div");
+          sheetNameDiv.classList.add("full-width");
+          const sheetLabel = document.createElement("label");
+          sheetLabel.setAttribute("for", `sheet_name_${sheetIndex}`);
+          sheetLabel.textContent = "Sheet Name:";
+          const sheetSelect = document.createElement("select");
+          sheetSelect.id = `sheet_name_${sheetIndex}`;
+          sheetSelect.name = `sheet_name_${sheetIndex}`;
+          sheetSelect.required = true;
+
+          const optionPlaceholder = document.createElement("option");
+          optionPlaceholder.value = "";
+          optionPlaceholder.textContent = "Select a sheet";
+          sheetSelect.appendChild(optionPlaceholder);
+
+          fetch("/get_sheets")
+            .then((response) => response.json())
+            .then((sheets) => initializeSheetSelectOptions(sheets, sheetSelect))
+            .catch((error) => console.error("Error fetching sheets:", error));
+
+          sheetSelect.addEventListener("change", function () {
+            const selectedSheet = this.value;
+            const excludeColumnsContainer = document.getElementById(
+              `exclude-columns_${sheetIndex}`
+            );
+            const editableColumnsContainer = document.getElementById(
+              `editable-columns_${sheetIndex}`
+            );
+
+            if (!excludeColumnsContainer || !editableColumnsContainer) {
+              console.error("Column containers not found");
+              return;
+            }
+
+            // Fetch columns based on the selected sheet
+            fetch(`/get_columns/${selectedSheet}`)
+              .then((response) => response.json())
+              .then((columns) => {
+                populateCheckboxes(
+                  columns,
+                  excludeColumnsContainer,
+                  `exclude_columns_${sheetIndex}`
+                );
+                populateCheckboxes(
+                  columns,
+                  editableColumnsContainer,
+                  `editable_columns_${sheetIndex}`
+                );
+              })
+              .catch((error) =>
+                console.error("Error fetching columns:", error)
+              );
+          });
+
+          sheetNameDiv.appendChild(sheetLabel);
+          sheetNameDiv.appendChild(sheetSelect);
+
+          const excludeColumnsDiv = document.createElement("div");
+          excludeColumnsDiv.classList.add("full-width");
+          const excludeLabel = document.createElement("label");
+          excludeLabel.setAttribute("for", `exclude-columns_${sheetIndex}`);
+          excludeLabel.textContent = "Exclude Columns:";
+          const excludeColumnsContainer = document.createElement("div");
+          excludeColumnsContainer.id = `exclude-columns_${sheetIndex}`;
+          excludeColumnsContainer.classList.add("checkbox-container");
+          excludeColumnsDiv.appendChild(excludeLabel);
+          excludeColumnsDiv.appendChild(excludeColumnsContainer);
+
+          const editableColumnsDiv = document.createElement("div");
+          editableColumnsDiv.classList.add("full-width");
+          const editableLabel = document.createElement("label");
+          editableLabel.setAttribute("for", `editable-columns_${sheetIndex}`);
+          editableLabel.textContent = "Editable Columns:";
+          const editableColumnsContainer = document.createElement("div");
+          editableColumnsContainer.id = `editable-columns_${sheetIndex}`;
+          editableColumnsContainer.classList.add("checkbox-container");
+          editableColumnsDiv.appendChild(editableLabel);
+          editableColumnsDiv.appendChild(editableColumnsContainer);
+
+          // Create a delete button
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button"; // Prevent form submission
+          deleteBtn.textContent = "Delete";
+          deleteBtn.classList.add("delete-sheet-btn");
+          deleteBtn.addEventListener("click", () => {
+            sheetBlock.remove(); // Remove the sheet section
+          });
+
+          sheetBlock.appendChild(sheetNameDiv);
+          sheetBlock.appendChild(excludeColumnsDiv);
+          sheetBlock.appendChild(editableColumnsDiv);
+          sheetBlock.appendChild(deleteBtn);
+          sheetsContainer.appendChild(sheetBlock);
+        }
+
+        function populateCheckboxes(columns, container, fieldName) {
+          container.innerHTML = ""; // Clear existing checkboxes
+          columns.forEach((column) => {
+            const label = document.createElement("label");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.name = fieldName;
+            checkbox.value = column;
+            label.appendChild(checkbox);
+            label.append(column);
+            container.appendChild(label);
+          });
+        }
+
+        accessControlBtn.addEventListener("click", () => {
+          popup.style.display = "flex";
+          document.getElementById("popup-title").textContent = "Add New User";
+          userForm.reset();
+          sheetsContainer.innerHTML = ""; // Clear all dynamically added sheet sections
+          sheetCount = 0; // Reset sheet count
+          addSheetSection(sheetCount); // Add the first sheet section by default
+        });
+
+        closeBtn.addEventListener("click", () => {
+          popup.style.display = "none";
+          userForm.reset();
+          sheetsContainer.innerHTML = ""; // Clear all added sheet sections
+          sheetCount = 0; // Reset sheet count
+        });
+
+        document.getElementById('user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+
+            const sheetsData = [];
+            for (let i = 0; i <= sheetCount; i++) {
+                const sheetName = document.getElementById(`sheet_name_${i}`).value;
+                const excludeColumns = Array.from(document.querySelectorAll(`#exclude-columns_${i} input:checked`)).map(checkbox => checkbox.value);
+                const editableColumns = Array.from(document.querySelectorAll(`#editable-columns_${i} input:checked`)).map(checkbox => checkbox.value);
+                sheetsData.push({
+                    sheet_name: sheetName,
+                    exclude_columns: excludeColumns,
+                    editable_columns: editableColumns
+                });
+            }
+
+            const data = {
+                name: name,
+                email: email,
+                password: password,
+                role: role,
+                sheets: sheetsData
+            };
+
+            try {
+                let response;
+                if (editMode) {
+                    response = await fetch(`/edit_user/${editUserId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch('/add_user', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error adding user:", errorData);
+                    return; // Exit here if there was an error
+                }
+
+                // Call response.json() only once
+                const responseData = await response.json();
+                console.log("User submitted successfully:", responseData);
+
+                // Close the popup after successful submission
+                popup.style.display = 'none';
+
+                // Optionally reset the form after submission
+                userForm.reset();
+
+                // Dynamically reload the page without full refresh to update the table
+                location.reload();  // This reloads the page to get the updated user list from the server
+    
+              if (response.ok) {
+                const user = await response.json();
+                if (editMode) {
+                  const row = document.querySelector(
+                    `tr[data-user-id="${user.id}"]`
+                  );
+                  row.innerHTML = `
+                            <td>${user.id}</td>
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>
+                                <div class="password-container">
+                                    <span class="password-mask">********</span>
+                                    <i class="fas fa-eye" style="cursor: pointer;" onclick="togglePasswordVisibility(this, '${
+                                      user.pass
+                                    }')"></i>
+                                </div>
+                            </td>
+                            <td>${user.role}</td>
+                            <td>${user.exclude_columns.join(", ")}</td>
+                            <td>${user.editable_columns.join(", ")}</td>
+                            <td>${user.sheet_name}</td>
+                            <td>
+                                <button class="edit-btn" data-id="${
+                                  user.id
+                                }">Edit</button>
+                                <button class="delete-btn" data-id="${
+                                  user.id
+                                }">Delete</button>
+                            </td>
+                        `;
+                        addRowEventListeners(row);
+                } else {
+                  const row = document.createElement("tr");
+                  row.dataset.userId = user.id;
+                  row.innerHTML = `
+                            <td>${user.id}</td>
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>
+                                <div class="password-container">
+                                    <span class="password-mask">********</span>
+                                    <i class="fas fa-eye" style="cursor: pointer;" onclick="togglePasswordVisibility(this, '${
+                                      user.pass
+                                    }')"></i>
+                                </div>
+                            </td>
+                            <td>${user.role}</td>
+                            <td>${user.exclude_columns.join(", ")}</td>
+                            <td>${user.editable_columns.join(", ")}</td>
+                            <td>${user.sheet_name}</td>
+                            <td>
+                                <button class="edit-btn" data-id="${
+                                  user.id
+                                }">Edit</button>
+                                <button class="delete-btn" data-id="${
+                                  user.id
+                                }">Delete</button>
+                            </td>
+                        `;
+                    addRowEventListeners(row);
+                    userTable.appendChild(row);
+                }
+                popup.style.display = "none";
+              } else {
+                const error = await response.json();
+                alert(error.error);
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
+          });
+
+        function addRowEventListeners(row) {
+          const editBtn = row.querySelector(".edit-btn");
+          const deleteBtn = row.querySelector(".delete-btn");
+
+                editBtn.addEventListener("click", async () => {
+                    console.log("Edit button clicked");
+                    editMode = true;
+                    editUserId = editBtn.dataset.id;
+
+                    const response = await fetch(`/get_user/${editUserId}`);
+                    if (response.ok) {
+                        const user = await response.json();
+
+                        // Fill in user details in the form
+                        document.getElementById("popup-title").textContent = "Edit User";
+                        document.getElementById("name").value = user.name;
+                        document.getElementById("email").value = user.email;
+                        document.getElementById("role").value = user.role;
+
+                        // Clear the sheet section
+                        const sheetsContainer = document.getElementById("sheets-container");
+                        sheetsContainer.innerHTML = ""; 
+
+                        // For each sheet, populate the sheet name and its columns
+                        Object.keys(user.sheets).forEach((sheetName, index) => {
+                            const excludeColumns = user.sheets[sheetName].exclude_columns || [];
+                            const editableColumns = user.sheets[sheetName].editable_columns || [];
+
+                            // Add new sheet section in the form for editing
+                            const sheetDiv = document.createElement("div");
+                            sheetDiv.classList.add("sheet-section");
+                            sheetDiv.innerHTML = `
+                                <div>
+                                    <label for="sheet_name_${index}">Sheet Name</label>
+                                    <input type="text" id="sheet_name_${index}" value="${sheetName}" readonly>
+                                </div>
+                                <div id="exclude-columns_${index}">
+                                    <label>Exclude Columns</label>
+                                    <!-- Exclude checkboxes will go here -->
+                                </div>
+                                <div id="editable-columns_${index}">
+                                    <label>Editable Columns</label>
+                                    <!-- Editable checkboxes will go here -->
+                                </div>
+                            `;
+                            sheetsContainer.appendChild(sheetDiv);
+
+                            // Fetch columns for each sheet and populate the checkboxes
+                            fetchColumns(sheetName, excludeColumns, editableColumns, index);
+                        });
+
+                        popup.style.display = "flex";
+                    } else {
+                        console.error("Failed to fetch user for editing");
+                    }
+    });
+
+// Function to fetch columns for each sheet and populate checkboxes
+async function fetchColumns(sheetName, excludeColumns, editableColumns, index) {
+    try {
+        const response = await fetch(`/get_columns?sheet_name=${encodeURIComponent(sheetName)}`);
+        if (response.ok) {
+            const columns = await response.json();
+
+            // Populate Exclude Columns checkboxes
+            const excludeColumnsContainer = document.getElementById(`exclude-columns_${index}`);
+            excludeColumnsContainer.innerHTML = ""; // Clear previous checkboxes
+            columns.forEach((column) => {
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = column;
+                checkbox.checked = excludeColumns.includes(column);
+                const label = document.createElement("label");
+                label.textContent = column;
+                excludeColumnsContainer.appendChild(checkbox);
+                excludeColumnsContainer.appendChild(label);
+            });
+
+            // Populate Editable Columns checkboxes
+            const editableColumnsContainer = document.getElementById(`editable-columns_${index}`);
+            editableColumnsContainer.innerHTML = ""; // Clear previous checkboxes
+            columns.forEach((column) => {
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = column;
+                checkbox.checked = editableColumns.includes(column);
+                const label = document.createElement("label");
+                label.textContent = column;
+                editableColumnsContainer.appendChild(checkbox);
+                editableColumnsContainer.appendChild(label);
+            });
+        } else {
+            console.error("Error fetching columns:", response.statusText);
+        }
+    } catch (error) {
+        console.error("Error fetching columns:", error);
+    }
+}
+
+          deleteBtn.addEventListener("click", () => {
+            const userId = deleteBtn.getAttribute("data-id");
+            if (confirm("Are you sure you want to delete this user?")) {
+              fetch(`/delete_user/${userId}`, {
+                method: "DELETE",
+              })
+                .then((response) => response.json())
+                .then((result) => {
+                  if (result.status === "ok") {
+                    row.remove();
+                  } else {
+                    alert("Failed to delete user");
+                  }
+                })
+                .catch((error) => console.error("Error:", error));
+            }
+          });
+        }
+
+        document
+          .querySelectorAll("#user-table tr")
+          .forEach(addRowEventListeners);
+      });
+
+      function togglePasswordVisibility(icon, password) {
+        const passwordMask = icon.previousElementSibling;
+        if (passwordMask.textContent === "********") {
+          passwordMask.textContent = password;
+          icon.classList.remove("fa-eye");
+          icon.classList.add("fa-eye-slash");
+        } else {
+          passwordMask.textContent = "********";
+          icon.classList.remove("fa-eye-slash");
+          icon.classList.add("fa-eye");
+        }
+      }
+
+    //   document.addEventListener("DOMContentLoaded", () => {
+    //     const sheetNameSelect = document.getElementById("sheet_name");
+    //     const excludeColumnsDiv = document.getElementById("exclude-columns");
+    //     const editableColumnsDiv = document.getElementById("editable-columns");
+
+    //     sheetNameSelect.addEventListener("change", () => {
+    //       const selectedSheet = sheetNameSelect.value;
+
+    //       // Fetch column names for the selected sheet
+    //       fetch(`/get_columns?sheet_name=${encodeURIComponent(selectedSheet)}`)
+    //         .then((response) => response.json())
+    //         .then((columns) => {
+    //           console.log("Fetched columns:", columns); // Debugging log
+
+    //           // Clear existing checkboxes
+    //           excludeColumnsDiv.innerHTML = "";
+    //           editableColumnsDiv.innerHTML = "";
+
+    //           // Create checkboxes for each column
+    //           columns.forEach((column) => {
+    //             const excludeCheckbox = document.createElement("input");
+    //             excludeCheckbox.type = "checkbox";
+    //             excludeCheckbox.value = column;
+    //             excludeCheckbox.name = "exclude_columns";
+    //             excludeColumnsDiv.appendChild(excludeCheckbox);
+    //             excludeColumnsDiv.appendChild(document.createTextNode(column));
+
+    //             const editableCheckbox = document.createElement("input");
+    //             editableCheckbox.type = "checkbox";
+    //             editableCheckbox.value = column;
+    //             editableCheckbox.name = "editable_columns";
+    //             editableColumnsDiv.appendChild(editableCheckbox);
+    //             editableColumnsDiv.appendChild(document.createTextNode(column));
+    //           });
+    //         })
+    //         .catch((error) => console.error("Error fetching columns:", error));
+    //     });
+    //   });
+
+      document.querySelectorAll(".expand-btn").forEach((button) => {
+        button.addEventListener("click", function () {
+          const row = this.closest("tr").nextElementSibling;
+          row.style.display =
+            row.style.display === "table-row" ? "none" : "table-row";
+        });
+      });
+    </script>
+  </body>
+</html>
