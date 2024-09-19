@@ -61,32 +61,5 @@
                 ]
             }
         }
-    },
-    {
-        "id": 3,
-        "name": "John Doe",
-        "email": "john@gmail.com",
-        "pass": "qazxcv",
-        "role": "Employee",
-        "sheets": {
-            "WorkSheet": {
-                "exclude_columns": [
-                    "S No.",
-                    "Work Discription"
-                ],
-                "editable_columns": [
-                    "Status",
-                    "Plag"
-                ]
-            },
-            "Math": {
-                "exclude_columns": [
-                    "Module"
-                ],
-                "editable_columns": [
-                    "Usage in Machine Learning"
-                ]
-            }
-        }
     }
 ]

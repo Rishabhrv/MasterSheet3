@@ -423,6 +423,11 @@
         padding: 5px 10px; /* Padding around the text */
         border-radius: 5px; /* Rounding for a soft edge look */
       }
+      .checkbox-wrapper {
+        display: inline-block !important; /* Force inline-block with !important */
+        margin-right: 15px;    /* Optional: Add space between checkboxes */
+      }
+
     </style>
   </head>
   <body>
@@ -696,15 +701,26 @@
 
         function populateCheckboxes(columns, container, fieldName) {
           container.innerHTML = ""; // Clear existing checkboxes
+
           columns.forEach((column) => {
-            const label = document.createElement("label");
+            const wrapper = document.createElement("div");
+            wrapper.classList.add("checkbox-wrapper");
+            
+            // Apply inline style directly here to override any conflicting styles
+            wrapper.style.display = "inline-block"; // Force inline-block
+
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.name = fieldName;
             checkbox.value = column;
-            label.appendChild(checkbox);
-            label.append(column);
-            container.appendChild(label);
+
+            const label = document.createElement("label");
+            label.textContent = column;
+
+            wrapper.appendChild(checkbox); // Add checkbox to wrapper
+            wrapper.appendChild(label);    // Add label next to checkbox
+
+            container.appendChild(wrapper); // Add the wrapper to the container
           });
         }
 
@@ -864,11 +880,16 @@
             }
           });
 
-        function addRowEventListeners(row) {
-          const editBtn = row.querySelector(".edit-btn");
-          const deleteBtn = row.querySelector(".delete-btn");
+                function addRowEventListeners(row) {
+                  const editBtn = row.querySelector(".edit-btn");
+                  const deleteBtn = row.querySelector(".delete-btn");
 
-                editBtn.addEventListener("click", async () => {
+                  if (!editBtn) {
+                    console.error("Edit button not found");
+                    return;
+                  }
+
+                  editBtn.addEventListener("click", async () => {
                     console.log("Edit button clicked");
                     editMode = true;
                     editUserId = editBtn.dataset.id;
@@ -921,48 +942,55 @@
                     }
     });
 
-// Function to fetch columns for each sheet and populate checkboxes
-async function fetchColumns(sheetName, excludeColumns, editableColumns, index) {
-    try {
-        const response = await fetch(`/get_columns?sheet_name=${encodeURIComponent(sheetName)}`);
+    // Function to fetch columns for each sheet and populate checkboxes
+    async function fetchColumns(sheetName, excludeColumns, editableColumns, index) {
+      console.log("Fetching columns for sheet:", sheetName);  // Debugging log
+      try {
+        const response = await fetch(`/get_columns/${encodeURIComponent(sheetName)}`);  // Use dynamic segment
         if (response.ok) {
-            const columns = await response.json();
+          const columns = await response.json();
 
             // Populate Exclude Columns checkboxes
             const excludeColumnsContainer = document.getElementById(`exclude-columns_${index}`);
             excludeColumnsContainer.innerHTML = ""; // Clear previous checkboxes
             columns.forEach((column) => {
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = column;
-                checkbox.checked = excludeColumns.includes(column);
-                const label = document.createElement("label");
-                label.textContent = column;
-                excludeColumnsContainer.appendChild(checkbox);
-                excludeColumnsContainer.appendChild(label);
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.value = column;
+              checkbox.name = `exclude_columns_${index}`;
+              checkbox.checked = excludeColumns.includes(column); // Mark checkbox as checked if it's in excludeColumns
+              const label = document.createElement("label");
+              label.textContent = column;
+              excludeColumnsContainer.appendChild(checkbox);
+              excludeColumnsContainer.appendChild(label);
             });
 
             // Populate Editable Columns checkboxes
             const editableColumnsContainer = document.getElementById(`editable-columns_${index}`);
             editableColumnsContainer.innerHTML = ""; // Clear previous checkboxes
             columns.forEach((column) => {
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = column;
-                checkbox.checked = editableColumns.includes(column);
-                const label = document.createElement("label");
-                label.textContent = column;
-                editableColumnsContainer.appendChild(checkbox);
-                editableColumnsContainer.appendChild(label);
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.value = column;
+              checkbox.name = `editable_columns_${index}`;
+              checkbox.checked = editableColumns.includes(column); // Mark checkbox as checked if it's in editableColumns
+              const label = document.createElement("label");
+              label.textContent = column;
+              editableColumnsContainer.appendChild(checkbox);
+              editableColumnsContainer.appendChild(label);
             });
-        } else {
+          } else {
             console.error("Error fetching columns:", response.statusText);
+          }
+        } catch (error) {
+          console.error("Error fetching columns:", error);
         }
-    } catch (error) {
-        console.error("Error fetching columns:", error);
-    }
-}
+      }
 
+          if (!deleteBtn) {
+            console.error("Delete button not found");
+            return;
+          }
           deleteBtn.addEventListener("click", () => {
             const userId = deleteBtn.getAttribute("data-id");
             if (confirm("Are you sure you want to delete this user?")) {
