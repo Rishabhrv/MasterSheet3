@@ -408,9 +408,6 @@ def get_user(user_id):
     return jsonify(user), 200
 
 # Existing route to add a new user
-# Existing route to add a new user
-# Existing route to add a new user
-# Existing route to add a new user
 @app.route('/add_user', methods=['POST'])
 def add_user():
     data = request.json
@@ -499,4 +496,4 @@ def get_sheet_columns(sheet_name):
     return jsonify(columns), 200
 
 if __name__ == "__main__":
-    app.run(debug = True)
+    app.run(debug = False)
