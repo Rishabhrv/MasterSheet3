@@ -66,7 +66,7 @@ users = read_users_from_json()
 def utility_processor():
     return dict(enumerate=enumerate)
 
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=10)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
 
 @app.before_request
 def manage_session():

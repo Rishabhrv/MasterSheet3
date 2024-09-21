@@ -26,38 +26,29 @@
     },
     {
         "id": 2,
-        "name": "Rishabh Vyas",
-        "email": "abc@mail.com",
-        "pass": "qaz",
+        "name": "Rishabh vyas",
+        "email": "rishabhvyas472@gmail.com",
+        "pass": "qazxcvb",
         "role": "Employee",
         "sheets": {
-            "MasterSheet": {
-                "exclude_columns": [
-                    "Book Title",
-                    "Author Name",
-                    "Writing"
-                ],
-                "editable_columns": [
-                    "Email Adress",
-                    "Author Detail",
-                    "Confirmation",
-                    "Amazon Link "
-                ]
-            },
             "WorkSheet": {
                 "exclude_columns": [
-                    "Topic"
+                    "client"
                 ],
                 "editable_columns": [
+                    "Status",
                     "Plag"
                 ]
             },
-            "Math": {
+            "MasterSheet": {
                 "exclude_columns": [
-                    "Topic"
+                    "Author Name",
+                    "Contact No."
                 ],
                 "editable_columns": [
-                    "Module"
+                    "Apply ISBN",
+                    "ISBN",
+                    "YES"
                 ]
             }
         }

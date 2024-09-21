@@ -7,6 +7,10 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
     />
+    <link rel="apple-touch-icon" sizes="180x180" href="static\images\apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="static\images\favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="static\images\favicon-16x16.png">
+    <link rel="manifest" href="static\images\site.webmanifest">
     <title>Admin Panel</title>
     <style>
       body {
@@ -424,9 +428,29 @@
         border-radius: 5px; /* Rounding for a soft edge look */
       }
       .checkbox-wrapper {
-        display: inline-block !important; /* Force inline-block with !important */
-        margin-right: 15px;    /* Optional: Add space between checkboxes */
-      }
+        display: inline-block !important;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        width: 16px;  /* Adjust checkbox size */
+        height: 16px;
+        margin-right: 5px;  /* Space between checkbox and label */
+    }
+
+    .checkbox-container label {
+        display: inline-block;
+        font-size: 14px;  /* Adjust label size if needed */
+        margin-right: 15px;
+    }
+
+    .checkbox-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;  /* Space between checkboxes */
+    }
+
 
     </style>
   </head>
@@ -944,48 +968,73 @@
 
     // Function to fetch columns for each sheet and populate checkboxes
     async function fetchColumns(sheetName, excludeColumns, editableColumns, index) {
-      console.log("Fetching columns for sheet:", sheetName);  // Debugging log
+      console.log("Fetching columns for sheet", sheetName);   // Debugging log
       try {
-        const response = await fetch(`/get_columns/${encodeURIComponent(sheetName)}`);  // Use dynamic segment
-        if (response.ok) {
-          const columns = await response.json();
+          const response = await fetch(`get_columns/${encodeURIComponent(sheetName)}`); // Use dynamic segment
+          if (response.ok) {
+              const columns = await response.json();
 
-            // Populate Exclude Columns checkboxes
-            const excludeColumnsContainer = document.getElementById(`exclude-columns_${index}`);
-            excludeColumnsContainer.innerHTML = ""; // Clear previous checkboxes
-            columns.forEach((column) => {
-              const checkbox = document.createElement("input");
-              checkbox.type = "checkbox";
-              checkbox.value = column;
-              checkbox.name = `exclude_columns_${index}`;
-              checkbox.checked = excludeColumns.includes(column); // Mark checkbox as checked if it's in excludeColumns
-              const label = document.createElement("label");
-              label.textContent = column;
-              excludeColumnsContainer.appendChild(checkbox);
-              excludeColumnsContainer.appendChild(label);
-            });
+              // Populate Exclude Columns checkboxes
+              const excludeColumnsContainer = document.getElementById(`exclude-columns_${index}`);
+              excludeColumnsContainer.innerHTML = '';  // Clear previous checkboxes
 
-            // Populate Editable Columns checkboxes
-            const editableColumnsContainer = document.getElementById(`editable-columns_${index}`);
-            editableColumnsContainer.innerHTML = ""; // Clear previous checkboxes
-            columns.forEach((column) => {
-              const checkbox = document.createElement("input");
-              checkbox.type = "checkbox";
-              checkbox.value = column;
-              checkbox.name = `editable_columns_${index}`;
-              checkbox.checked = editableColumns.includes(column); // Mark checkbox as checked if it's in editableColumns
-              const label = document.createElement("label");
-              label.textContent = column;
-              editableColumnsContainer.appendChild(checkbox);
-              editableColumnsContainer.appendChild(label);
-            });
+              // Ensure Exclude Columns label is appended
+              const excludeLabel = document.createElement('label');
+              excludeLabel.textContent = "Exclude Columns";
+              excludeColumnsContainer.appendChild(excludeLabel);
+
+              columns.forEach((column) => {
+                  const wrapper = document.createElement('div');
+                  wrapper.classList.add('checkbox-wrapper');
+
+                  const checkbox = document.createElement('input');
+                  checkbox.type = 'checkbox';
+                  checkbox.value = column;
+                  checkbox.name = `exclude_columns_${index}`;
+                  checkbox.checked = excludeColumns.includes(column);  // Mark checkbox as checked if it's in excludeColumns
+
+                  const label = document.createElement('label');
+                  label.textContent = column;
+
+                  wrapper.appendChild(checkbox);
+                  wrapper.appendChild(label);
+                  excludeColumnsContainer.appendChild(wrapper);
+              });
+
+              // Populate Editable Columns checkboxes
+              const editableColumnsContainer = document.getElementById(`editable-columns_${index}`);
+              editableColumnsContainer.innerHTML = '';  // Clear previous checkboxes
+
+              // Ensure Editable Columns label is appended
+              const editableLabel = document.createElement('label');
+              editableLabel.textContent = "Editable Columns";
+              editableColumnsContainer.appendChild(editableLabel);
+
+              columns.forEach((column) => {
+                  const wrapper = document.createElement('div');
+                  wrapper.classList.add('checkbox-wrapper');
+
+                  const checkbox = document.createElement('input');
+                  checkbox.type = 'checkbox';
+                  checkbox.value = column;
+                  checkbox.name = `editable_columns_${index}`;
+                  checkbox.checked = editableColumns.includes(column);  // Mark checkbox as checked if it's in editableColumns
+
+                  const label = document.createElement('label');
+                  label.textContent = column;
+
+                  wrapper.appendChild(checkbox);
+                  wrapper.appendChild(label);
+                  editableColumnsContainer.appendChild(wrapper);
+              });
           } else {
-            console.error("Error fetching columns:", response.statusText);
+              console.error("Error fetching columns", response.statusText);
           }
-        } catch (error) {
-          console.error("Error fetching columns:", error);
-        }
+      } catch (error) {
+          console.error("Error fetching columns", error);
       }
+  }
+
 
           if (!deleteBtn) {
             console.error("Delete button not found");
@@ -1027,46 +1076,6 @@
           icon.classList.add("fa-eye");
         }
       }
-
-    //   document.addEventListener("DOMContentLoaded", () => {
-    //     const sheetNameSelect = document.getElementById("sheet_name");
-    //     const excludeColumnsDiv = document.getElementById("exclude-columns");
-    //     const editableColumnsDiv = document.getElementById("editable-columns");
-
-    //     sheetNameSelect.addEventListener("change", () => {
-    //       const selectedSheet = sheetNameSelect.value;
-
-    //       // Fetch column names for the selected sheet
-    //       fetch(`/get_columns?sheet_name=${encodeURIComponent(selectedSheet)}`)
-    //         .then((response) => response.json())
-    //         .then((columns) => {
-    //           console.log("Fetched columns:", columns); // Debugging log
-
-    //           // Clear existing checkboxes
-    //           excludeColumnsDiv.innerHTML = "";
-    //           editableColumnsDiv.innerHTML = "";
-
-    //           // Create checkboxes for each column
-    //           columns.forEach((column) => {
-    //             const excludeCheckbox = document.createElement("input");
-    //             excludeCheckbox.type = "checkbox";
-    //             excludeCheckbox.value = column;
-    //             excludeCheckbox.name = "exclude_columns";
-    //             excludeColumnsDiv.appendChild(excludeCheckbox);
-    //             excludeColumnsDiv.appendChild(document.createTextNode(column));
-
-    //             const editableCheckbox = document.createElement("input");
-    //             editableCheckbox.type = "checkbox";
-    //             editableCheckbox.value = column;
-    //             editableCheckbox.name = "editable_columns";
-    //             editableColumnsDiv.appendChild(editableCheckbox);
-    //             editableColumnsDiv.appendChild(document.createTextNode(column));
-    //           });
-    //         })
-    //         .catch((error) => console.error("Error fetching columns:", error));
-    //     });
-    //   });
-
       document.querySelectorAll(".expand-btn").forEach((button) => {
         button.addEventListener("click", function () {
           const row = this.closest("tr").nextElementSibling;
