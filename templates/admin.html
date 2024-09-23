@@ -27,7 +27,7 @@
         padding: 20px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         border-radius: 8px;
-        position: relative; /* Make the container the reference point for positioning */
+        position: relative;
       }
       h1 {
         text-align: center;
@@ -449,6 +449,11 @@
         display: flex;
         flex-wrap: wrap;
         gap: 10px;  /* Space between checkboxes */
+    }
+
+    #add-sheet {
+      margin-left: 0; /* Aligns to the left */
+      justify-self: flex-start; /* Ensures alignment in grid layouts */
     }
 
 

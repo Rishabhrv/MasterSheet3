@@ -98,9 +98,13 @@
         }
 
         .dropdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 0.25rem 0;
-            margin-right: auto;
+            width: 100%;
         }
+
 
         .d-flex.justify-content-between.align-items-center.px-3 {
             padding-left: 1rem;
@@ -135,14 +139,26 @@
                 <div class="dropdown-menu" aria-labelledby="sheetDropdown">
                     {% if session['user_role'] == 'Admin' %}
                         {% for sheet_name, sheet_id in sheets.items() %}
+                                                <!-- Admin version with visible delete button -->
                         <div class="d-flex justify-content-between align-items-center px-3">
                             <a class="dropdown-item p-0" href="#" onclick="selectSheet('{{ sheet_id }}', '{{ sheet_name }}')">{{ sheet_name }}</a>
-                            <a href="#" class="text-danger ml-2" onclick="deleteSheet('{{ sheet_name }}')"><i class="fas fa-trash-alt"></i></a>
+                            <a href="#" class="text-danger ml-2" onclick="deleteSheet('{{ sheet_name }}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
                         </div>
                         {% endfor %}
                     {% else %}
                         {% for sheet_name, sheet_id in user_sheets.items() %}
-                        <a class="dropdown-item p-0" href="#" onclick="selectSheet('{{ sheet_id }}', '{{ sheet_name }}')">{{ sheet_name }}</a>
+                        
+                        <!-- User version with an invisible delete icon -->
+                        <div class="d-flex justify-content-between align-items-center px-3">
+                            <a class="dropdown-item p-0" href="#" onclick="selectSheet('{{ sheet_id }}', '{{ sheet_name }}')">{{ sheet_name }}</a>
+                            <!-- Invisible placeholder for delete button -->
+                            <span class="ml-2" style="opacity: 0;">
+                                <i class="fas fa-trash-alt"></i>
+                            </span>
+                        </div>
+
                         {% endfor %}
                     {% endif %}
                 </div>

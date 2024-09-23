@@ -458,18 +458,39 @@ def add_user():
 def edit_user(user_id):
     app.logger.info(f"Edit request received for user ID: {user_id}")
     data = request.json
+    
+    # Find the user
     user = next((user for user in users if user['id'] == user_id), None)
-    if user:
-        user['name'] = data['name']
-        user['email'] = data['email']
-        user['pass'] = data['password']
-        user['role'] = data['role']
-        user['exclude_columns'] = data['exclude_columns']
-        user['editable_columns'] = data['editable_columns']
-        user['sheet_name'] = data['sheet_name']
-        write_users_to_json(users)
-        return jsonify(user)
-    return jsonify({"error": "User not found"}), 404
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Update user basic info
+    user['name'] = data['name']
+    user['email'] = data['email']
+    user['pass'] = data['password']
+    user['role'] = data['role']
+    
+    # Handle multiple sheets
+    sheets = {}
+    for sheet in data['sheets']:
+        sheet_name = sheet['sheet_name']
+        exclude_columns = sheet.get('exclude_columns', [])
+        editable_columns = sheet.get('editable_columns', [])
+        
+        # Update the sheet details in the dictionary
+        sheets[sheet_name] = {
+            "exclude_columns": exclude_columns,
+            "editable_columns": editable_columns
+        }
+
+    # Update the user sheets with the new data
+    user['sheets'] = sheets
+
+    # Write changes to JSON file
+    write_users_to_json(users)
+
+    app.logger.info(f'User {user["name"]} updated with email: {user["email"]}')
+    return jsonify(user), 200
 
 
 @app.route('/get_columns/<sheet_name>', methods=['GET'])
