@@ -170,19 +170,19 @@ def login():
                     # Admin has access to all sheets
                     session['user_sheets'] = sheets
                     
-                    # Check if 'MasterSheet' exists in available sheets
-                    if 'MasterSheet' in session['user_sheets']:
-                        set_user_sheet_session('MasterSheet')  # Default sheet for admin
+                    # # Check if 'MasterSheet' exists in available sheets
+                    # if 'MasterSheet' in session['user_sheets']:
+                    #     set_user_sheet_session('MasterSheet')  # Default sheet for admin
+                    # else:
+                    #     # If 'MasterSheet' doesn't exist, open the first available sheet
+                    first_available_sheet = next(iter(session['user_sheets']), None)
+                    if first_available_sheet:
+                        set_user_sheet_session(first_available_sheet)
                     else:
-                        # If 'MasterSheet' doesn't exist, open the first available sheet
-                        first_available_sheet = next(iter(session['user_sheets']), None)
-                        if first_available_sheet:
-                            set_user_sheet_session(first_available_sheet)
-                        else:
-                            session['current_sheet_name'] = None
-                            session['current_sheet_id'] = None
-                            session['exclude_columns'] = []
-                            session['editable_columns'] = []
+                        session['current_sheet_name'] = None
+                        session['current_sheet_id'] = None
+                        session['exclude_columns'] = []
+                        session['editable_columns'] = []
                 else:
                     # Non-admin users
                     session['user_sheets'] = user.get('sheets', {})
