@@ -334,12 +334,14 @@
 }
 
 
-    document.getElementById('addSheetForm').addEventListener('submit', function(event) {
+document.getElementById('addSheetForm').addEventListener('submit', function(event) {
     event.preventDefault();
+    
     const sheetIdInput = document.getElementById('sheetId');
     const sheetIdError = document.getElementById('sheetIdError');
     const sheetId = sheetIdInput.value;
 
+    // Check if the Sheet ID is valid
     if (sheetId.length !== 44) {  
         sheetIdError.style.display = 'block';
         return;
@@ -347,23 +349,31 @@
         sheetIdError.style.display = 'none';
     }
 
+    // Send POST request to add the new sheet
     $.post('/sheets', $(this).serialize())
     .done(function(response) {
-        $('#addSheetModal').modal('hide');  // Close the Add Sheet modal
 
-        // Show feedback after modal is fully hidden
-        $('#addSheetModal').on('hidden.bs.modal', function () {
-            showFeedback("Sheet added successfully!");
-        });
+        if (response.sheet_name && response.sheet_id) {
+            $('#addSheetModal').modal('hide');  // Close the Add Sheet modal
 
-        // Dynamically update the sheet list
-        updateSheetList(response.sheet_name, response.sheet_id);
+            // Dynamically update the sheet list without page reload
+            updateSheetList(response.sheet_name, response.sheet_id);
+
+            // Show feedback when modal is hidden
+            $('#addSheetModal').on('hidden.bs.modal', function () {
+                showFeedback("Sheet added successfully!");
+            });
+        } else {
+            console.error("Missing sheet_name or sheet_id in the server response");
+            showFeedback("Error: Missing sheet data.");
+        }
     })
-
     .fail(function(response) {
+        console.error("Failed to add sheet:", response);
         showFeedback("Failed to add sheet. Please try again.");
     });
 });
+
 
 function showFeedback(message) {
     $('#feedbackMessage').text(message);
@@ -371,15 +381,39 @@ function showFeedback(message) {
 }
 
 function updateSheetList(sheetName, sheetId) {
-    const sheetSelect = document.getElementById('sheetSelect');  // Assuming this is the select element for sheets
-    const newOption = document.createElement('option');
-    newOption.value = sheetId;
-    newOption.textContent = sheetName;
-    sheetSelect.appendChild(newOption);
+    const sheetDropdownMenu = document.querySelector('.dropdown-menu[aria-labelledby="sheetDropdown"]'); // Target the dropdown menu div
 
-    // Optionally select the newly added sheet
-    sheetSelect.value = sheetId;
+    if (sheetDropdownMenu) {
+        // Create new div element for the sheet
+        const newSheetDiv = document.createElement('div');
+        newSheetDiv.classList.add('d-flex', 'justify-content-between', 'align-items-center', 'px-3');
+
+        // Create the link element for the new sheet
+        const newSheetLink = document.createElement('a');
+        newSheetLink.classList.add('dropdown-item', 'p-0');
+        newSheetLink.href = '#';
+        newSheetLink.textContent = sheetName;
+        newSheetLink.setAttribute('onclick', `selectSheet('${sheetId}', '${sheetName}')`);
+
+        // Optionally, create the delete button (for admin users)
+        const deleteButton = document.createElement('a');
+        deleteButton.href = '#';
+        deleteButton.classList.add('text-danger', 'ml-2');
+        deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+        deleteButton.setAttribute('onclick', `deleteSheet('${sheetName}')`);
+
+        // Append the link and delete button to the new div
+        newSheetDiv.appendChild(newSheetLink);
+        newSheetDiv.appendChild(deleteButton);
+
+        // Append the new div to the dropdown menu
+        sheetDropdownMenu.appendChild(newSheetDiv);
+
+    } else {
+        console.error("Sheet dropdown menu not found in DOM.");
+    }
 }
+
 
     
     $(document).ready(function(){
