@@ -515,14 +515,8 @@
                 {% for sheet_name, sheet_info in user.sheets.items() %}
                 <div class="sheet-container">
                   <h4 class="sheet-name">{{ sheet_name }}</h4>
-                  <p>
-                    <strong>Exclude Columns:</strong> {{
-                    sheet_info.exclude_columns | join(', ') }}
-                  </p>
-                  <p>
-                    <strong>Editable Columns:</strong> {{
-                    sheet_info.editable_columns | join(', ') }}
-                  </p>
+                  <p><strong>Exclude Columns:</strong> {{ sheet_info.exclude_columns | join(', ') }}</p>
+                  <p><strong>Editable Columns:</strong> {{ sheet_info.editable_columns | join(', ') }}</p>
                 </div>
                 {% endfor %}
               </div>

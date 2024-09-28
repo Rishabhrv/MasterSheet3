@@ -170,11 +170,6 @@ def login():
                     # Admin has access to all sheets
                     session['user_sheets'] = sheets
                     
-                    # # Check if 'MasterSheet' exists in available sheets
-                    # if 'MasterSheet' in session['user_sheets']:
-                    #     set_user_sheet_session('MasterSheet')  # Default sheet for admin
-                    # else:
-                    #     # If 'MasterSheet' doesn't exist, open the first available sheet
                     first_available_sheet = next(iter(session['user_sheets']), None)
                     if first_available_sheet:
                         set_user_sheet_session(first_available_sheet)
@@ -335,6 +330,10 @@ def access_control():
     if session.get('user_role') != 'Admin':
         app.logger.warning('Unauthorized access to accesscontrol by non-admin user.')
         return redirect(url_for('index'))
+    for user in users:
+        if user['role'] == 'Admin':
+            # Admin can access all sheets, so add sheets from sheets.json
+            user['sheets'] = sheets
     return render_template('admin.html', users=users)
 
 @app.route('/sheets', methods=['GET','POST'])
@@ -393,14 +392,42 @@ def delete_user(user_id):
 def delete_sheet(sheet_name):
     if session.get('user_role') == 'Admin':
         if sheet_name in sheets:
-            del sheets[sheet_name]
-            write_sheets_to_json(sheets)  # Update the JSON file
-            app.logger.info(f'Sheet {sheet_name} deleted by Admin.')
-            return '', 204
+            # Check if the current sheet is being deleted
+            if session.get('current_sheet_name') == sheet_name:
+                # Get a list of all available sheets except the one being deleted
+                remaining_sheets = {k: v for k, v in sheets.items() if k != sheet_name}
+                
+                # Delete the sheet
+                del sheets[sheet_name]
+                write_sheets_to_json(sheets)  # Update the JSON file
+                app.logger.info(f'Sheet {sheet_name} deleted by Admin.')
+
+                # Check if there are remaining sheets to switch to
+                if remaining_sheets:
+                    # Select the first available sheet after deletion
+                    new_sheet_name, new_sheet_id = next(iter(remaining_sheets.items()))
+                    set_user_sheet_session(new_sheet_name, new_sheet_id)
+                    app.logger.info(f"Switched to new sheet: {new_sheet_name}")
+                else:
+                    # No more sheets available, reset session
+                    session['current_sheet_name'] = None
+                    session['current_sheet_id'] = None
+                    session['exclude_columns'] = []
+                    session['editable_columns'] = []
+                    app.logger.info("No sheets left after deletion. Session reset.")
+
+                return '', 204
+            else:
+                # Simply delete the sheet if it's not the current one
+                del sheets[sheet_name]
+                write_sheets_to_json(sheets)  # Update the JSON file
+                app.logger.info(f'Sheet {sheet_name} deleted by Admin.')
+                return '', 204
         else:
             return "Sheet not found", 404
     else:
         return "Unauthorized", 403
+
 
 #--------------------###############################
 
