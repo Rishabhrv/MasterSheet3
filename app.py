@@ -99,7 +99,7 @@ def is_access_allowed():
     india_tz = pytz.timezone('Asia/Kolkata')
     current_time = datetime.now(india_tz).time()
     start_time = datetime.strptime('09:30', '%H:%M').time()
-    end_time = datetime.strptime('18:57', '%H:%M').time()
+    end_time = datetime.strptime('18:00', '%H:%M').time()
     return start_time <= current_time <= end_time      
 
 def filter_columns(data, exclude_columns):
@@ -219,6 +219,7 @@ def index():
         sheet = gc.open_by_key(current_sheet_id).sheet1
     except Exception as e:
         app.logger.error(f"Error opening sheet with ID {current_sheet_id}: {e}")
+        session.clear()
         return "Error: Could not access the assigned sheet. Could be API Error"
 
     # Get all values from the Google Sheet
@@ -276,14 +277,13 @@ def update():
             raise BadRequest('Row and column must be positive integers.')
         
         sheet.update_cell(row, col, value)
-        app.logger.info(f'Updated cell at row {row}, col {col} with value {value}')
+        #app.logger.info(f'Updated cell at row {row}, col {col} with value {value}')
         return 'OK'
     
     except (ValueError, BadRequest) as e:
         app.logger.error(f'Invalid input: {e}')
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
-    
     except gspread.exceptions.APIError as e:
         app.logger.error(f'Google Sheets API error: {e}')
         return jsonify({'status': 'error', 'message': 'Google Sheets API error'}), 500
@@ -323,7 +323,6 @@ def add_new_data():
     except Exception as e:
         app.logger.error(f'Error adding new data: {e}')
         return jsonify({'status': 'error', 'message': str(e)}), 500
-
 
 @app.route('/access_control')
 def access_control():

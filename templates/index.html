@@ -19,12 +19,15 @@
             margin: 0;
             padding: 0;
         }
+        /* Adjust table styles to avoid content bleed */
         .table-wrapper {
             overflow-x: auto;
             max-height: 85vh;
             overflow-y: auto;
-            padding: 10px;
-            margin-top: 32px;
+            overflow-x: auto;
+            padding: 0px;
+            margin-top: 30px;
+            position: relative; /* Ensure scrolling only applies to table content */
         }
         table {
             border-collapse: collapse;
@@ -34,6 +37,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             background-color: #fff;
+            position: static;
         }
         th {
             background-color: #266cad;
@@ -111,6 +115,25 @@
             padding-right: 1rem;
         }
 
+        /* Add this style for the row number column */
+        .row-number {
+            background-color: #f0f0f0;
+            text-align: center;
+            color: gray;
+            width: 20px;
+        }
+
+        /* Updated styles for sticky header */
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1000; /* Increased to ensure it remains above all other content */
+            background-color: #266cad; /* Ensure header stays solid */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add shadow to define the separation */
+            border-bottom: 2px solid #ddd; /* Optional: stronger bottom border for clarity */
+            
+        }
+
 
     </style>
 </head>
@@ -118,7 +141,7 @@
 <span id="hiddenSheetName" style="display: none;">{{ current_sheet_name }}</span>
 
 
-<nav class="navbar navbar-expand-lg navbar-light navbar-custom fixed-top">
+<nav class="navbar navbar-expand-lg navbar-light navbar-custom fixed-top nav-top">
     <!-- Add the logo here -->
     <a class="navbar-brand" href="#">
         <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height: 30px; margin-right: 8px;">
@@ -178,6 +201,7 @@
     </div>
 </nav>
 
+
 <div class="container-fluid mt-4">
     <div class="row">
         <div class="col-md-12">
@@ -185,6 +209,8 @@
                 <table class="table table-bordered" id="dataTable">
                     <thead>
                         <tr>
+                            <!-- Add an empty header cell for the row numbers -->
+                            <th class="row-number"></th>
                             {% for col_name in values[0] %}
                             <th>
                                 {{ col_name }}
@@ -211,12 +237,15 @@
                     <tbody>
                         {% for row in values[1:] %}
                         <tr>
+                            <!-- Insert row number dynamically -->
+                            <td class="row-number">{{ loop.index }}</td>
                             {% for cell in row %}
                             <td contenteditable="{{ 'true' if loop.index0 in editable_indices else 'false' }}">{{ cell }}</td>
                             {% endfor %}
                         </tr>
                         {% endfor %}
                         <tr>
+                            <td class="row-number">{{ values|length }}</td> <!-- Row number for the new data row -->
                             {% for i in range(columns) %}
                             <td contenteditable="{{ 'true' if i in editable_indices else 'false' }}"></td>
                             {% endfor %}
@@ -227,6 +256,7 @@
         </div>
     </div>
 </div>
+
 
 <div class="modal fade" id="addSheetModal" tabindex="-1" role="dialog" aria-labelledby="addSheetModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
