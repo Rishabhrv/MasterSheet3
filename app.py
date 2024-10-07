@@ -275,9 +275,15 @@ def update():
         
         if row <= 0 or col <= 0:
             raise BadRequest('Row and column must be positive integers.')
-        
+
+        # Check if the value is a boolean (TRUE or FALSE)
+        if value.upper() == 'TRUE':
+            value = True
+        elif value.upper() == 'FALSE':
+            value = False
+
+        # Update the Google Sheet with the value
         sheet.update_cell(row, col, value)
-        #app.logger.info(f'Updated cell at row {row}, col {col} with value {value}')
         return 'OK'
     
     except (ValueError, BadRequest) as e:
@@ -291,6 +297,7 @@ def update():
     except Exception as e:
         app.logger.error(f'Error updating cell: {e}')
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
         
 
 @app.route('/add', methods=['POST'])

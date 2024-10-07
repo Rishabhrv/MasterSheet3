@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        body {
+   body {
             font-family: 'Arial', sans-serif;
             background-color: #f8f9fa;
             margin: 0;
@@ -22,7 +22,7 @@
         /* Adjust table styles to avoid content bleed */
         .table-wrapper {
             overflow-x: auto;
-            max-height: 85vh;
+            max-height: 90vh;
             overflow-y: auto;
             overflow-x: auto;
             padding: 0px;
@@ -115,14 +115,6 @@
             padding-right: 1rem;
         }
 
-        /* Add this style for the row number column */
-        .row-number {
-            background-color: #f0f0f0;
-            text-align: center;
-            color: gray;
-            width: 20px;
-        }
-
         /* Updated styles for sticky header */
         thead th {
             position: sticky;
@@ -134,14 +126,13 @@
             
         }
 
-
     </style>
 </head>
 <body>
 <span id="hiddenSheetName" style="display: none;">{{ current_sheet_name }}</span>
 
 
-<nav class="navbar navbar-expand-lg navbar-light navbar-custom fixed-top nav-top">
+<nav class="navbar navbar-expand-lg navbar-light navbar-custom fixed-top">
     <!-- Add the logo here -->
     <a class="navbar-brand" href="#">
         <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height: 30px; margin-right: 8px;">
@@ -201,7 +192,6 @@
     </div>
 </nav>
 
-
 <div class="container-fluid mt-4">
     <div class="row">
         <div class="col-md-12">
@@ -209,8 +199,6 @@
                 <table class="table table-bordered" id="dataTable">
                     <thead>
                         <tr>
-                            <!-- Add an empty header cell for the row numbers -->
-                            <th class="row-number"></th>
                             {% for col_name in values[0] %}
                             <th>
                                 {{ col_name }}
@@ -237,15 +225,12 @@
                     <tbody>
                         {% for row in values[1:] %}
                         <tr>
-                            <!-- Insert row number dynamically -->
-                            <td class="row-number">{{ loop.index }}</td>
                             {% for cell in row %}
                             <td contenteditable="{{ 'true' if loop.index0 in editable_indices else 'false' }}">{{ cell }}</td>
                             {% endfor %}
                         </tr>
                         {% endfor %}
                         <tr>
-                            <td class="row-number">{{ values|length }}</td> <!-- Row number for the new data row -->
                             {% for i in range(columns) %}
                             <td contenteditable="{{ 'true' if i in editable_indices else 'false' }}"></td>
                             {% endfor %}
@@ -256,7 +241,6 @@
         </div>
     </div>
 </div>
-
 
 <div class="modal fade" id="addSheetModal" tabindex="-1" role="dialog" aria-labelledby="addSheetModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
