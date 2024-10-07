@@ -226,16 +226,18 @@
                         {% for row in values[1:] %}
                         <tr>
                             {% for cell in row %}
-                            <td contenteditable="{{ 'true' if loop.index0 in editable_indices else 'false' }}">{{ cell }}</td>
+                            <td contenteditable="{{ 'true' if loop.index0 in editable_indices else 'false' }}"
+                                data-editable="{{ 'true' if loop.index0 in editable_indices else 'false' }}">{{ cell }}</td>
                             {% endfor %}
                         </tr>
                         {% endfor %}
                         <tr>
                             {% for i in range(columns) %}
-                            <td contenteditable="{{ 'true' if i in editable_indices else 'false' }}"></td>
+                            <td contenteditable="{{ 'true' if i in editable_indices else 'false' }}"
+                                data-editable="{{ 'true' if i in editable_indices else 'false' }}"></td>
                             {% endfor %}
                         </tr>
-                    </tbody>
+                    </tbody>                    
                 </table>
             </div>
         </div>
@@ -288,18 +290,33 @@
 <script>
 
 
-    document.querySelectorAll('td[contenteditable="true"]').forEach(function(cell) {
-                cell.addEventListener('blur', function() {
-                    var row = cell.parentNode.rowIndex + 1;
-                    var col = cell.cellIndex + 1;
-                    var value = cell.textContent;
+                // Step 1: Disable editing for all initially editable cells on page load
+            document.querySelectorAll('td[contenteditable="true"]').forEach(function(cell) {
+                cell.setAttribute('contenteditable', 'false'); // Disable editing by default
+            });
 
-                    // Always call updateCell, even if the value is empty
-                    if (row === document.querySelectorAll('tr').length) {
-                        // This is the last row (new data row)
-                        addNewData(row, col, value);
-                    } else {
+            // Step 2: Enable editing on double-click, only if the cell has the data-editable="true" attribute
+            document.querySelectorAll('td').forEach(function(cell) {
+                // Double-click event listener to enable editing
+                cell.addEventListener('dblclick', function() {
+                    if (cell.dataset.editable === 'true') {
+                        cell.setAttribute('contenteditable', 'true'); // Enable editing
+                        cell.focus(); // Focus on the cell for editing
+                    }
+                });
+
+                // Save changes on blur and disable editing again
+                cell.addEventListener('blur', function() {
+                    if (cell.getAttribute('contenteditable') === 'true') {
+                        var row = cell.parentNode.rowIndex + 1;  // Get row index
+                        var col = cell.cellIndex + 1;  // Get column index
+                        var value = cell.textContent;  // Get the current cell value
+
+                        // Call API to update cell
                         updateCell(row, col, value);
+
+                        // Disable editing after the update
+                        cell.setAttribute('contenteditable', 'false');
                     }
                 });
             });
