@@ -46,7 +46,9 @@
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 5px;
+            padding: 5px !important; /* Reduce padding */
+            height: 31px !important; /* Explicitly set the height */
+            vertical-align: bottom !important;
         }
         tr:nth-child(even) {
             background-color: #f2f2f2;

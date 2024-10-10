@@ -212,6 +212,7 @@ def index():
     # If for some reason current_sheet_id is not found, return an error rather than assigning a new sheet
     if not current_sheet_id:
         app.logger.error(f"Sheet ID not found for the current session. Sheet name: {current_sheet_name}")
+        session.clear()
         return "Error: No valid sheet assigned to you."
 
     # Fetch the sheet using the current_sheet_id stored in the session
@@ -277,10 +278,10 @@ def update():
             raise BadRequest('Row and column must be positive integers.')
 
         # Check if the value is a boolean (TRUE or FALSE)
-        if value.upper() == 'TRUE':
-            value = True
-        elif value.upper() == 'FALSE':
-            value = False
+        # if value.upper() == 'TRUE':
+        #     value = True
+        # elif value.upper() == 'FALSE':
+        #     value = False
 
         # Update the Google Sheet with the value
         sheet.update_cell(row, col, value)
