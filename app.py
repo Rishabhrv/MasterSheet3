@@ -104,12 +104,16 @@ def is_access_allowed():
 
 def filter_columns(data, exclude_columns):
     if "view_all" in exclude_columns:
-        return data
+        return data, list(range(len(data[0])))  # Return data and a direct mapping if no columns are excluded
     else:
         cleaned_permissions = {permission.strip() for permission in exclude_columns}
         headers = data[0]
-        allowed_indices = [idx for idx, header in enumerate(headers) if header.strip() in cleaned_permissions]
-        return [[cell for idx, cell in enumerate(row) if idx not in allowed_indices] for row in data]
+        allowed_indices = [idx for idx, header in enumerate(headers) if header.strip() not in cleaned_permissions]
+
+        # Return both the filtered data and the list of allowed indices (mapping to original data)
+        filtered_data = [[cell for idx, cell in enumerate(row) if idx in allowed_indices] for row in data]
+        return filtered_data, allowed_indices  # Filtered data and mapping of allowed indices
+
 
 def filter_editable_columns(filtered_headers, original_headers, editable_columns):
     cleaned_permissions = [perm.split(":")[1].strip() if ":" in perm else perm for perm in editable_columns]
@@ -236,7 +240,7 @@ def index():
     editable_columns = session.get('editable_columns', [])
 
     # Filter columns
-    filtered_values = filter_columns(values, exclude_columns)
+    filtered_values, allowed_indices = filter_columns(values, exclude_columns)
     filtered_headers = filtered_values[0]
 
     # Determine editable indices based on filtered headers
@@ -253,6 +257,7 @@ def index():
     return render_template(
         'index.html', 
         values=filtered_values, 
+        allowed_indices=allowed_indices,
         columns=len(filtered_values[0]) if filtered_values else 0,
         sheets=sheets,  # For Admin use
         user_sheets=user_sheets,  # For non-admin users
@@ -276,12 +281,6 @@ def update():
         
         if row <= 0 or col <= 0:
             raise BadRequest('Row and column must be positive integers.')
-
-        # Check if the value is a boolean (TRUE or FALSE)
-        # if value.upper() == 'TRUE':
-        #     value = True
-        # elif value.upper() == 'FALSE':
-        #     value = False
 
         # Update the Google Sheet with the value
         sheet.update_cell(row, col, value)

@@ -229,17 +229,19 @@
                         <tr>
                             {% for cell in row %}
                             <td contenteditable="{{ 'true' if loop.index0 in editable_indices else 'false' }}"
-                                data-editable="{{ 'true' if loop.index0 in editable_indices else 'false' }}">{{ cell }}</td>
+                                data-editable="{{ 'true' if loop.index0 in editable_indices else 'false' }}"
+                                data-original-index="{{ allowed_indices[loop.index0] }}">{{ cell }}</td>
                             {% endfor %}
                         </tr>
                         {% endfor %}
                         <tr>
                             {% for i in range(columns) %}
                             <td contenteditable="{{ 'true' if i in editable_indices else 'false' }}"
-                                data-editable="{{ 'true' if i in editable_indices else 'false' }}"></td>
+                                data-editable="{{ 'true' if i in editable_indices else 'false' }}"
+                                data-original-index="{{ allowed_indices[i] }}"></td>
                             {% endfor %}
                         </tr>
-                    </tbody>                    
+                    </tbody>                              
                 </table>
             </div>
         </div>
@@ -299,25 +301,22 @@
 
             // Step 2: Enable editing on double-click, only if the cell has the data-editable="true" attribute
             document.querySelectorAll('td').forEach(function(cell) {
-                // Double-click event listener to enable editing
                 cell.addEventListener('dblclick', function() {
                     if (cell.dataset.editable === 'true') {
-                        cell.setAttribute('contenteditable', 'true'); // Enable editing
-                        cell.focus(); // Focus on the cell for editing
+                        cell.setAttribute('contenteditable', 'true');
+                        cell.focus();
                     }
                 });
 
-                // Save changes on blur and disable editing again
                 cell.addEventListener('blur', function() {
                     if (cell.getAttribute('contenteditable') === 'true') {
-                        var row = cell.parentNode.rowIndex + 1;  // Get row index
-                        var col = cell.cellIndex + 1;  // Get column index
-                        var value = cell.textContent;  // Get the current cell value
+                        var row = cell.parentNode.rowIndex + 1;  // Row index in the table (still the same)
+                        var originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1;  // Use original index
+                        var value = cell.textContent;
 
-                        // Call API to update cell
-                        updateCell(row, col, value);
+                        // Update the cell using the correct row and original column index
+                        updateCell(row, originalCol, value);
 
-                        // Disable editing after the update
                         cell.setAttribute('contenteditable', 'false');
                     }
                 });
@@ -332,6 +331,7 @@
                     body: 'row=' + row + '&col=' + col + '&value=' + encodeURIComponent(value),
                 });
             }
+
 
         function addNewData(row, col, value) {
             var newRow = [];
@@ -358,7 +358,7 @@
 
         function selectSheet(sheetId, sheetName) {
     // Update the current sheet name in the UI
-    document.getElementById('currentSheetName').innerText = 'Now Showing: ' + sheetName;
+    document.getElementById('currentSheetName').innerText = 'Switching to: ' + sheetName;
 
     // Perform the post request to select the sheet
     $.post('/select_sheet/' + sheetId, { sheet_name: sheetName }, function() {
