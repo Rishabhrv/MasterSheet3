@@ -144,3 +144,4 @@ users.json
 
 # Cython debug symbols
 cython_debug/
+columns.txt

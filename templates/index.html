@@ -186,6 +186,9 @@
             <li class="nav-item">
                 <a class="nav-link" href="/access_control" style="color:white;">Access Control</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/dashboard" style="color:white;">Dashboard</a>
+            </li>
                 {% endif %}
             <li class="nav-item">
                 <a class="nav-link btn-logout" href="/logout" style="color:white;"><i class="fa fa-power-off"></i> Logout</a>
@@ -333,28 +336,32 @@
             }
 
 
-        function addNewData(row, col, value) {
-            var newRow = [];
-            var cells = document.querySelectorAll('tr:last-child td');
-            cells.forEach(function(cell) {
-                newRow.push(cell.textContent);
-            });
+            function addNewData() {
+                var newRow = [];
+                var cells = document.querySelectorAll('tr:last-child td');
 
-            fetch('/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'data=' + JSON.stringify(newRow),
-            }).then(function(response) {
-                return response.text();
-            }).then(function(text) {
-                console.log(text);
-                location.reload(); // Reload the page to get the updated data
-            }).catch(function(error) {
-                console.error(error);
-            });
-        }
+                // Gather content from the last row's cells
+                cells.forEach(function(cell) {
+                    newRow.push(cell.textContent);
+                });
+
+                // Send the data to the Flask server
+                fetch('/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'data=' + encodeURIComponent(JSON.stringify(newRow)),
+                }).then(function(response) {
+                    return response.text();
+                }).then(function(text) {
+                    console.log(text);
+                    location.reload(); // Reload the page to reflect the added row
+                }).catch(function(error) {
+                    console.error('Error:', error);
+                });
+            }
+
 
         function selectSheet(sheetId, sheetName) {
     // Update the current sheet name in the UI

@@ -265,6 +265,39 @@ def index():
         editable_indices=editable_indices
     )
 
+# New route to fetch data and render the dashboard page
+@app.route('/dashboard')
+def dashboard():
+    # Fetch data from the MasterSheet
+    master_sheet_id = sheets["MasterSheet"]
+    worksheet = gc.open_by_key(master_sheet_id).sheet1
+    
+    # Explicitly define the expected headers to avoid the error
+    expected_headers = ["Writing", "Apply ISBN", "Cover Page"]
+    data = worksheet.get_all_records(expected_headers=expected_headers)
+    
+    # Initialize counters for YES/NO for each column
+    writing_count = {"YES": 0, "NO": 0}
+    isbn_count = {"YES": 0, "NO": 0}
+    cover_page_count = {"YES": 0, "NO": 0}
+    
+    # Count YES/NO for each column
+    for row in data:
+        writing_count[row["Writing"]] += 1
+        isbn_count[row["Apply ISBN"]] += 1
+        cover_page_count[row["Cover Page"]] += 1
+    
+    # Prepare the data for the chart
+    chart_data = {
+        'writing': writing_count,
+        'isbn': isbn_count,
+        'cover_page': cover_page_count
+    }
+    
+    # Send the processed data to the dashboard template
+    return render_template('dashboard.html', data=json.dumps(chart_data))
+
+
 @app.route('/update', methods=['POST'])
 def update():
     try:
@@ -303,7 +336,6 @@ def update():
 @app.route('/add', methods=['POST'])
 def add_new_data():
     try:
-        # Fetch the sheet dynamically using the sheet ID stored in the session
         current_sheet_id = session.get('current_sheet_id')
         if not current_sheet_id:
             raise BadRequest('No sheet selected.')
@@ -311,10 +343,12 @@ def add_new_data():
         sheet = gc.open_by_key(current_sheet_id).sheet1
         
         data = request.form['data']
-        new_row = eval(data)  # Be cautious with eval, as it can execute arbitrary code
+        new_row = json.loads(data)  # Safely parse JSON data
+
         if not isinstance(new_row, list) or not all(isinstance(item, str) for item in new_row):
             raise BadRequest('Invalid data format. Expected a list of strings.')
 
+        # Append the new row to the Google Sheet
         sheet.append_row(new_row)
         app.logger.info(f'Added new row: {new_row}')
         return 'OK'
@@ -564,4 +598,4 @@ def get_sheet_columns(sheet_name):
     return jsonify(columns), 200
 
 if __name__ == "__main__":
-    app.run(debug = False)
+    app.run(debug = True)
