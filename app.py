@@ -1,12 +1,14 @@
 import json
 import logging
 import os
+
 from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
 import gspread
 import pytz
-from flask import (Flask, jsonify, redirect, render_template, request, session,url_for)
+from flask import (Flask, jsonify, redirect,
+                   render_template, request, session, url_for)
 from google.oauth2.service_account import Credentials
 from werkzeug.exceptions import BadRequest
 
@@ -145,6 +147,11 @@ def set_user_sheet_session(sheet_name, sheet_id=None):
             app.logger.warning(f"Unauthorized access attempt by user: {session.get('user_role')}")
             raise PermissionError("Unauthorized access")
 
+# Fetch data from a Google Sheet
+def sheet_to_df(sheet_id):
+    worksheet = gc.open_by_key(sheet_id).sheet1
+    data = worksheet.get_all_records()
+    return pd.DataFrame(data)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -264,39 +271,6 @@ def index():
         current_sheet_name=session.get('current_sheet_name'), 
         editable_indices=editable_indices
     )
-
-# New route to fetch data and render the dashboard page
-@app.route('/dashboard')
-def dashboard():
-    # Fetch data from the MasterSheet
-    master_sheet_id = sheets["MasterSheet"]
-    worksheet = gc.open_by_key(master_sheet_id).sheet1
-    
-    # Explicitly define the expected headers to avoid the error
-    expected_headers = ["Writing", "Apply ISBN", "Cover Page"]
-    data = worksheet.get_all_records(expected_headers=expected_headers)
-    
-    # Initialize counters for YES/NO for each column
-    writing_count = {"YES": 0, "NO": 0}
-    isbn_count = {"YES": 0, "NO": 0}
-    cover_page_count = {"YES": 0, "NO": 0}
-    
-    # Count YES/NO for each column
-    for row in data:
-        writing_count[row["Writing"]] += 1
-        isbn_count[row["Apply ISBN"]] += 1
-        cover_page_count[row["Cover Page"]] += 1
-    
-    # Prepare the data for the chart
-    chart_data = {
-        'writing': writing_count,
-        'isbn': isbn_count,
-        'cover_page': cover_page_count
-    }
-    
-    # Send the processed data to the dashboard template
-    return render_template('dashboard.html', data=json.dumps(chart_data))
-
 
 @app.route('/update', methods=['POST'])
 def update():
@@ -598,4 +572,4 @@ def get_sheet_columns(sheet_name):
     return jsonify(columns), 200
 
 if __name__ == "__main__":
-    app.run(debug = True)
+    app.run(debug = False)
