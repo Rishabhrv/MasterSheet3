@@ -1,5 +1,6 @@
 import json
 import logging
+import pandas as pd
 import os
 
 from datetime import datetime, timedelta
@@ -147,12 +148,6 @@ def set_user_sheet_session(sheet_name, sheet_id=None):
             app.logger.warning(f"Unauthorized access attempt by user: {session.get('user_role')}")
             raise PermissionError("Unauthorized access")
 
-# Fetch data from a Google Sheet
-def sheet_to_df(sheet_id):
-    worksheet = gc.open_by_key(sheet_id).sheet1
-    data = worksheet.get_all_records()
-    return pd.DataFrame(data)
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if session.get('logged_in'):
@@ -210,7 +205,6 @@ def login():
             error = 'Invalid credentials'
     
     return render_template('login.html', error=error)
-
 
 @app.route('/')
 def index():
@@ -306,7 +300,6 @@ def update():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
         
-
 @app.route('/add', methods=['POST'])
 def add_new_data():
     try:
@@ -357,7 +350,6 @@ def manage_sheets():
 
     if len(sheet_id) != 44:
         return jsonify({'status': 'error', 'message': 'Invalid Sheet ID length.'}), 400
-
     try:
         sheets[sheet_name] = sheet_id
         write_sheets_to_json(sheets)
@@ -374,7 +366,6 @@ def select_sheet(sheet_id):
     # Check if the user is logged in
     if not session.get('logged_in'):
         return jsonify({'status': 'error', 'message': 'User not logged in'}), 403
-
     try:
         # Set session variables for the selected sheet
         set_user_sheet_session(sheet_name, sheet_id)
@@ -382,8 +373,7 @@ def select_sheet(sheet_id):
         return '', 204
 
     except PermissionError:
-        return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403
-
+        return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403  
 
 @app.route('/delete_user/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
@@ -546,7 +536,6 @@ def edit_user(user_id):
 
     app.logger.info(f'User {user["name"]} updated with email: {user["email"]}')
     return jsonify(user), 200
-
 
 @app.route('/get_columns/<sheet_name>', methods=['GET'])
 def get_sheet_columns(sheet_name):
