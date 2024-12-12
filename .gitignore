@@ -135,6 +135,8 @@ dmypy.json
 token.json
 sheets.json
 users.json
+my_dataframe.csv
+streamlit_app.py
 
 # Pyre type checker
 .pyre/
@@ -145,3 +147,4 @@ users.json
 # Cython debug symbols
 cython_debug/
 columns.txt
+test.ipynb

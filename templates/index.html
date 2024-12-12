@@ -148,6 +148,11 @@
             <!-- <li class="nav-item">
                 <a class="nav-link" href="#" onclick="addRow()" style="color:white;">Add Row</a>
             </li> -->
+            <li class="nav-item"> 
+                {% if session['user_role'] == 'Admin' %}
+                <a class="nav-link" href="{{ url_for('redirect_to_dashboard') }}" target="_blank" style="color:white;">Dashboard</a>
+            </li>
+                {% endif %}
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="sheetDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:white;">
                     Sheets
@@ -185,9 +190,6 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/access_control" style="color:white;">Access Control</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/dashboard" style="color:white;">Dashboard</a>
             </li>
                 {% endif %}
             <li class="nav-item">

@@ -1,5 +1,6 @@
 import json
 import logging
+import jwt
 import os
 
 from datetime import datetime, timedelta
@@ -11,9 +12,15 @@ from flask import (Flask, jsonify, redirect,
                    render_template, request, session, url_for)
 from google.oauth2.service_account import Credentials
 from werkzeug.exceptions import BadRequest
+from jwt import encode
+from dotenv import load_dotenv
+
+
 
 app = Flask(__name__)
+load_dotenv()
 app.secret_key = os.getenv('SECRET_KEY', 'default-secret-key') 
+SECRET_KEY = app.secret_key
 
 scope = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -75,7 +82,7 @@ def manage_session():
     session.permanent = True
 
     # Bypass the check if we're on the login, logout, or static routes
-    if request.endpoint in ('login', 'static', 'logout'):
+    if request.endpoint in ('login', 'static', 'logout','redirect_to_dashboard', 'redirect_to_adsearch'):
         return None
 
     # If user is not logged in, redirect to login
@@ -88,6 +95,60 @@ def manage_session():
             username = session.get('name', 'Unknown User')
             app.logger.info(f'Logging out user {username} due to time restriction.')
             return redirect(url_for('logout'))
+
+        
+@app.route('/redirect_to_dashboard')
+def redirect_to_dashboard():
+    import time
+    if not session.get('logged_in') or session.get('user_role') != 'Admin':
+        app.logger.warning("Unauthorized request to redirect_to_dashboard.")
+        return redirect(url_for('login'))
+
+    try:
+        # Get the current time and add 10 minutes in seconds
+        expiration_time = int(time.time()) + 20 * 60
+        
+        token = encode({
+            'user': session['name'],
+            'role': session['user_role'],
+            'exp': expiration_time
+        }, SECRET_KEY, algorithm='HS256')
+
+        dashboard_url = f"http://localhost:8501?token={token}"
+
+        return redirect(dashboard_url)
+    except Exception as e:
+        app.logger.error(f"Error generating token or redirect URL: {str(e)}")
+        return "Internal Server Error", 500
+
+
+@app.route('/redirect_to_adsearch', methods=['POST'])
+def redirect_to_adsearch():
+    import time
+    from flask import request
+
+    # Validate incoming request (e.g., with an API key or token)
+    api_key = request.headers.get('Authorization')
+    if api_key != SECRET_KEY:
+        app.logger.warning("Unauthorized request to redirect_to_adsearch.")
+        return "Unauthorized", 401
+
+    try:
+        expiration_time = int(time.time()) + 10 * 60
+
+        # Generate token for Adsearch
+        token = encode({
+            'user': request.json.get('user'),  # Get user details from the request
+            'role': request.json.get('role'), 
+            'exp': expiration_time
+        }, SECRET_KEY, algorithm='HS256')
+
+        adsearch_url = f"http://localhost:8502?token={token}"
+        return {"url": adsearch_url}, 200
+    except Exception as e:
+        app.logger.error(f"Error generating token or redirect URL for AdSearch: {str(e)}")
+        return "Internal Server Error", 500
+
 
 @app.route('/logout')
 def logout():
@@ -146,12 +207,6 @@ def set_user_sheet_session(sheet_name, sheet_id=None):
         else:
             app.logger.warning(f"Unauthorized access attempt by user: {session.get('user_role')}")
             raise PermissionError("Unauthorized access")
-
-# Fetch data from a Google Sheet
-def sheet_to_df(sheet_id):
-    worksheet = gc.open_by_key(sheet_id).sheet1
-    data = worksheet.get_all_records()
-    return pd.DataFrame(data)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -357,7 +412,6 @@ def manage_sheets():
 
     if len(sheet_id) != 44:
         return jsonify({'status': 'error', 'message': 'Invalid Sheet ID length.'}), 400
-
     try:
         sheets[sheet_name] = sheet_id
         write_sheets_to_json(sheets)
@@ -374,7 +428,6 @@ def select_sheet(sheet_id):
     # Check if the user is logged in
     if not session.get('logged_in'):
         return jsonify({'status': 'error', 'message': 'User not logged in'}), 403
-
     try:
         # Set session variables for the selected sheet
         set_user_sheet_session(sheet_name, sheet_id)
