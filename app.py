@@ -82,7 +82,7 @@ def manage_session():
     session.permanent = True
 
     # Bypass the check if we're on the login, logout, or static routes
-    if request.endpoint in ('login', 'static', 'logout','redirect_to_dashboard', 'redirect_to_adsearch'):
+    if request.endpoint in ('login', 'static', 'logout'):
         return None
 
     # If user is not logged in, redirect to login
@@ -114,7 +114,7 @@ def redirect_to_dashboard():
             'exp': expiration_time
         }, SECRET_KEY, algorithm='HS256')
 
-        dashboard_url = f"http://localhost:8501?token={token}"
+        dashboard_url = f"https://agkit.agvolumes.com/?token={token}"
 
         return redirect(dashboard_url)
     except Exception as e:
@@ -143,7 +143,7 @@ def redirect_to_adsearch():
             'exp': expiration_time
         }, SECRET_KEY, algorithm='HS256')
 
-        adsearch_url = f"http://localhost:8502?token={token}"
+        adsearch_url = f"https://agsearch.agvolumes.com/?token={token}"
         return {"url": adsearch_url}, 200
     except Exception as e:
         app.logger.error(f"Error generating token or redirect URL for AdSearch: {str(e)}")
