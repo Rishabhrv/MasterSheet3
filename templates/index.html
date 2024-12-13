@@ -30,32 +30,46 @@
             position: relative; /* Ensure scrolling only applies to table content */
         }
         table {
-            border-collapse: collapse;
-            width: 100%;
-            font-size: 11px;
-            margin: 0 auto;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            background-color: #fff;
-            position: static;
-        }
-        th {
-            background-color: #266cad;
-            color: white;
-            text-align: center;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 5px !important; /* Reduce padding */
-            height: 31px !important; /* Explicitly set the height */
-            vertical-align: bottom !important;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        tr:hover {
-            background-color: #ddd;
-        }
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 11px;
+    margin: 0 auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background-color: #fff;
+    position: static;
+}
+th {
+    background-color: #266cad;
+    color: white;
+    text-align: center;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 5px !important; /* Reduce padding */
+    height: 31px !important; /* Explicitly set the height */
+    vertical-align: bottom !important;
+}
+
+/* Style every group of 4 rows in white and the next 4 in gray */
+tr:nth-child(8n+1),
+tr:nth-child(8n+2),
+tr:nth-child(8n+3),
+tr:nth-child(8n+4) {
+    background-color: #fff;
+}
+
+tr:nth-child(8n+5),
+tr:nth-child(8n+6),
+tr:nth-child(8n+7),
+tr:nth-child(8n+8) {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #ddd;
+}
+
         .filter-row input, .filter-row .input-daterange input {
             width: 100%;
         }

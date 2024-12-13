@@ -1,6 +1,5 @@
 import json
 import logging
-import jwt
 import os
 
 from datetime import datetime, timedelta
@@ -266,7 +265,6 @@ def login():
     
     return render_template('login.html', error=error)
 
-
 @app.route('/')
 def index():
     if not session.get('logged_in'):
@@ -361,7 +359,6 @@ def update():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
         
-
 @app.route('/add', methods=['POST'])
 def add_new_data():
     try:
@@ -435,8 +432,7 @@ def select_sheet(sheet_id):
         return '', 204
 
     except PermissionError:
-        return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403
-
+        return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403  
 
 @app.route('/delete_user/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
@@ -599,7 +595,6 @@ def edit_user(user_id):
 
     app.logger.info(f'User {user["name"]} updated with email: {user["email"]}')
     return jsonify(user), 200
-
 
 @app.route('/get_columns/<sheet_name>', methods=['GET'])
 def get_sheet_columns(sheet_name):
