@@ -1,10 +1,8 @@
 import json
 import logging
 import os
-
 from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
-
 import gspread
 import pytz
 from flask import (Flask, jsonify, redirect,
@@ -13,7 +11,6 @@ from google.oauth2.service_account import Credentials
 from werkzeug.exceptions import BadRequest
 from jwt import encode
 from dotenv import load_dotenv
-
 
 
 app = Flask(__name__)
