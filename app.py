@@ -78,7 +78,7 @@ def manage_session():
     session.permanent = True
 
     # Bypass the check if we're on the login, logout, or static routes
-    if request.endpoint in ('login', 'static', 'logout'):
+    if request.endpoint in ('login', 'static', 'logout','redirect_to_adsearch'):
         return None
 
     # If user is not logged in, redirect to login
@@ -111,7 +111,7 @@ def redirect_to_dashboard():
         }, SECRET_KEY, algorithm='HS256')
 
         dashboard_url = f"https://agkit.agvolumes.com/?token={token}"
-
+        app.logger.info("Redirect to Data Dashboard successfully")
         return redirect(dashboard_url)
     except Exception as e:
         app.logger.error(f"Error generating token or redirect URL: {str(e)}")
@@ -121,29 +121,39 @@ def redirect_to_dashboard():
 @app.route('/redirect_to_adsearch', methods=['POST'])
 def redirect_to_adsearch():
     import time
-    from flask import request
-
-    # Validate incoming request (e.g., with an API key or token)
-    api_key = request.headers.get('Authorization')
-    if api_key != SECRET_KEY:
-        app.logger.warning("Unauthorized request to redirect_to_adsearch.")
-        return "Unauthorized", 401
+    from flask import request, jsonify
 
     try:
-        expiration_time = int(time.time()) + 10 * 60
+        # Validate API key
+        api_key = request.headers.get('Authorization')
+        if not api_key:
+            app.logger.warning("Missing Authorization header.")
+            return jsonify({"error": "Authorization header is missing"}), 400
 
-        # Generate token for Adsearch
+        if api_key != SECRET_KEY:
+            app.logger.warning("Unauthorized request to redirect_to_adsearch.")
+            return jsonify({"error": "Unauthorized"}), 401
+
+        # Validate and parse JSON payload
+        data = request.get_json()
+        if not data or 'user' not in data or 'role' not in data:
+            app.logger.warning("Invalid JSON payload received.")
+            return jsonify({"error": "Invalid request data"}), 400
+
+        # Generate token and construct URL
+        expiration_time = int(time.time()) + 10 * 60
         token = encode({
-            'user': request.json.get('user'),  # Get user details from the request
-            'role': request.json.get('role'), 
+            'user': data['user'],
+            'role': data['role'],
             'exp': expiration_time
         }, SECRET_KEY, algorithm='HS256')
 
         adsearch_url = f"https://agsearch.agvolumes.com/?token={token}"
-        return {"url": adsearch_url}, 200
+        app.logger.info(f"Redirect to Advance search successfully for user {data['user']}")
+        return jsonify({"url": adsearch_url}), 200
     except Exception as e:
-        app.logger.error(f"Error generating token or redirect URL for AdSearch: {str(e)}")
-        return "Internal Server Error", 500
+        app.logger.error(f"Error in /redirect_to_adsearch: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
 
 
 @app.route('/logout')
