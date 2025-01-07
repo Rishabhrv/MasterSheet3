@@ -110,8 +110,8 @@ def redirect_to_dashboard():
             'exp': expiration_time
         }, SECRET_KEY, algorithm='HS256')
 
-        #dashboard_url = f"https://agkit.agvolumes.com/?token={token}"
-        dashboard_url = f"http://localhost:8501/?token={token}"
+        dashboard_url = f"https://agkit.agvolumes.com/?token={token}"
+        #dashboard_url = f"http://localhost:8501/?token={token}"
         app.logger.info("Redirect to Data Dashboard successfully")
         return redirect(dashboard_url)
     except Exception as e:
@@ -149,8 +149,8 @@ def redirect_to_adsearch():
             'exp': expiration_time
         }, SECRET_KEY, algorithm='HS256')
 
-        #adsearch_url = f"https://agsearch.agvolumes.com/?token={token}"
-        adsearch_url = f"http://localhost:8502/?token={token}"
+        adsearch_url = f"https://agsearch.agvolumes.com/?token={token}"
+        #adsearch_url = f"http://localhost:8502/?token={token}"
         app.logger.info(f"Redirect to Advance search successfully for user {data['user']}")
         return jsonify({"url": adsearch_url}), 200
     except Exception as e:
