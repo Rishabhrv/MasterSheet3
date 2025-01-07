@@ -313,43 +313,116 @@ tr:hover {
 <script>
 
 
-                // Step 1: Disable editing for all initially editable cells on page load
-            document.querySelectorAll('td[contenteditable="true"]').forEach(function(cell) {
-                cell.setAttribute('contenteditable', 'false'); // Disable editing by default
-            });
+            document.addEventListener('DOMContentLoaded', function () {
+                let currentCell = null;
 
-            // Step 2: Enable editing on double-click, only if the cell has the data-editable="true" attribute
-            document.querySelectorAll('td').forEach(function(cell) {
-                cell.addEventListener('dblclick', function() {
-                    if (cell.dataset.editable === 'true') {
-                        cell.setAttribute('contenteditable', 'true');
-                        cell.focus();
+                // Add event listener to make cells focusable and listen for keyboard events
+                document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
+                    cell.setAttribute('tabindex', '0'); // Make cells focusable for keyboard navigation
+                    cell.addEventListener('focus', function () {
+                        currentCell = cell; // Track the currently focused cell
+                    });
+                });
+
+                // Add paste handler to all editable cells
+                document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
+                    cell.addEventListener('paste', function (event) {
+                        // Prevent default paste behavior
+                        event.preventDefault();
+
+                        // Get plain text from clipboard
+                        const clipboardData = event.clipboardData || window.clipboardData;
+                        const plainText = clipboardData.getData('text/plain');
+
+                        // Insert the plain text into the cell
+                        document.execCommand('insertText', false, plainText);
+                    });
+                });
+
+                // Listen for keydown events to handle arrow key navigation
+                document.addEventListener('keydown', function (event) {
+                    if (!currentCell) return;
+
+                    const table = currentCell.closest('table'); // Get the parent table
+                    const row = currentCell.parentNode; // Get the current row
+                    const cellIndex = Array.from(row.children).indexOf(currentCell); // Get cell index
+                    const rowIndex = Array.from(table.rows).indexOf(row); // Get row index
+
+                    switch (event.key) {
+                        case 'ArrowUp':
+                            if (rowIndex > 1) { // Prevent going above the header
+                                const aboveRow = table.rows[rowIndex - 1];
+                                const targetCell = aboveRow.cells[cellIndex];
+                                if (targetCell) targetCell.focus();
+                            }
+                            break;
+
+                        case 'ArrowDown':
+                            if (rowIndex < table.rows.length - 1) {
+                                const belowRow = table.rows[rowIndex + 1];
+                                const targetCell = belowRow.cells[cellIndex];
+                                if (targetCell) targetCell.focus();
+                            }
+                            break;
+
+                        case 'ArrowLeft':
+                            if (cellIndex > 0) {
+                                const leftCell = row.cells[cellIndex - 1];
+                                if (leftCell) leftCell.focus();
+                            }
+                            break;
+
+                        case 'ArrowRight':
+                            if (cellIndex < row.cells.length - 1) {
+                                const rightCell = row.cells[cellIndex + 1];
+                                if (rightCell) rightCell.focus();
+                            }
+                            break;
+
+                        case 'Enter':
+                            // Start editing the current cell on Enter key
+                            if (currentCell.dataset.editable === 'true') {
+                                currentCell.setAttribute('contenteditable', 'true');
+                                currentCell.focus();
+                            }
+                            break;
+
+                        case 'Escape':
+                            // Stop editing the current cell on Escape key
+                            if (currentCell.getAttribute('contenteditable') === 'true') {
+                                currentCell.setAttribute('contenteditable', 'false');
+                                currentCell.blur();
+                            }
+                            break;
                     }
                 });
 
-                cell.addEventListener('blur', function() {
-                    if (cell.getAttribute('contenteditable') === 'true') {
-                        var row = cell.parentNode.rowIndex + 1;  // Row index in the table (still the same)
-                        var originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1;  // Use original index
-                        var value = cell.textContent;
+                // Retain existing blur functionality for saving cell changes
+                document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
+                    cell.addEventListener('blur', function () {
+                        if (cell.getAttribute('contenteditable') === 'true') {
+                            const row = cell.parentNode.rowIndex + 1; // Row index
+                            const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1; // Column index
+                            const value = cell.textContent;
 
-                        // Update the cell using the correct row and original column index
-                        updateCell(row, originalCol, value);
-
-                        cell.setAttribute('contenteditable', 'false');
-                    }
+                            // Update cell on server
+                            updateCell(row, originalCol, value);
+                            cell.setAttribute('contenteditable', 'false');
+                        }
+                    });
                 });
+
+                function updateCell(row, col, value) {
+                    fetch('/update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'row=' + row + '&col=' + col + '&value=' + encodeURIComponent(value),
+                    });
+                }
             });
 
-            function updateCell(row, col, value) {
-                fetch('/update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'row=' + row + '&col=' + col + '&value=' + encodeURIComponent(value),
-                });
-            }
 
 
             function addNewData() {
