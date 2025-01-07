@@ -20,10 +20,12 @@ jobs:
 
       - name: Deploy to VPS
         run: |
-          ssh -o StrictHostKeyChecking=no rishabhvyas@178.16.137.226 << 'EOF'
-          cd /home/rishabhvyas/MasterSheet3
-          git pull origin main
-          source /home/rishabhvyas/MasterSheet3/venv/bin/activate
-          pip install -r requirements.txt
-          sudo systemctl restart mastersheet.service
-          EOF
+          ssh -o StrictHostKeyChecking=no rishabhvyas@178.16.137.226 "
+            cd /home/rishabhvyas/MasterSheet3 &&
+            git fetch origin &&
+            git config pull.rebase false &&
+            git pull origin main &&
+            source venv/bin/activate &&
+            pip install -r requirements.txt &&
+            sudo systemctl restart mastersheet.service
+          "
