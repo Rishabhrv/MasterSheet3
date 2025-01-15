@@ -324,6 +324,8 @@ def login():
     
     return render_template('login.html', error=error)
 
+checkbox_columns = ['Book Complete', 'Apply ISBN', 'ID Proof']
+
 @app.route('/')
 def index():
     if not session.get('logged_in'):
@@ -382,7 +384,9 @@ def index():
         user_sheets=user_sheets,  # For non-admin users
         current_sheet_name=session.get('current_sheet_name'), 
         editable_indices=editable_indices,
-        filtered_headers = filtered_headers
+        filtered_headers = filtered_headers,
+        checkbox_columns = checkbox_columns
+        
     )
 
 @app.route('/update', methods=['POST'])

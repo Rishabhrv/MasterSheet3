@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
     <style>
    body {
             font-family: 'Arial', sans-serif;
@@ -144,6 +146,20 @@ tr:hover {
             
         }
 
+        .checkbox-icon {
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .text-success {
+            color: green;
+        }
+
+        .text-danger {
+            color: red;
+        }
+
+
     </style>
 </head>
 <body>
@@ -259,23 +275,61 @@ tr:hover {
                         {% for row in values[1:] %}
                         <tr>
                             {% for cell in row %}
-                            <td contenteditable="{{ 'true' if loop.index0 in editable_indices else 'false' }}"
+                            <td 
+                                contenteditable="{{ 'true' if loop.index0 in editable_indices and filtered_headers[loop.index0] not in checkbox_columns else 'false' }}"
                                 data-editable="{{ 'true' if loop.index0 in editable_indices else 'false' }}"
                                 data-original-index="{{ allowed_indices[loop.index0] }}"
-                                data-column-name="{{ filtered_headers[loop.index0] }}">{{ cell }}</td>
+                                data-column-name="{{ filtered_headers[loop.index0] }}"
+                                {% if filtered_headers[loop.index0] in checkbox_columns %}
+                                data-is-checkbox="true"
+                                {% endif %}
+                            >
+                                {% if filtered_headers[loop.index0] in checkbox_columns %}
+                                <input 
+                                    type="checkbox" 
+                                    class="checkbox-input" 
+                                    {{ 'checked' if cell == 'TRUE' else '' }} 
+                                    onchange="updateIcon(this)"
+                                >
+                                <span class="checkbox-icon">
+                                    {% if cell == 'TRUE' %}
+                                    <i class="fa fa-check text-success"></i>
+                                    {% else %}
+                                    <i class="fa fa-times text-danger"></i>
+                                    {% endif %}
+                                </span>
+                                {% else %}
+                                {{ cell }}
+                                {% endif %}
+                            </td>
                             {% endfor %}
                         </tr>
                         {% endfor %}
                         <tr>
                             {% for i in range(columns) %}
-                            <td contenteditable="{{ 'true' if i in editable_indices else 'false' }}"
+                            <td 
+                                contenteditable="{{ 'true' if i in editable_indices and filtered_headers[i] not in checkbox_columns else 'false' }}"
                                 data-editable="{{ 'true' if i in editable_indices else 'false' }}"
                                 data-original-index="{{ allowed_indices[i] }}"
-                                data-column-name="{{ filtered_headers[i] }}"></td>
+                                data-column-name="{{ filtered_headers[i] }}"
+                                {% if filtered_headers[i] in checkbox_columns %}
+                                data-is-checkbox="true"
+                                {% endif %}
+                            >
+                                {% if filtered_headers[i] in checkbox_columns %}
+                                <input 
+                                    type="checkbox" 
+                                    class="checkbox-input" 
+                                    onchange="updateIcon(this)"
+                                >
+                                <span class="checkbox-icon">
+                                    <i class="fa fa-times text-danger"></i>
+                                </span>
+                                {% endif %}
+                            </td>
                             {% endfor %}
                         </tr>
-                    </tbody>
-                                                
+                    </tbody>                                                           
                 </table>
             </div>
         </div>
@@ -331,6 +385,7 @@ tr:hover {
                 let currentCell = null;
                 const dateColumns = ["Date","Writing Start Date", "Writing End Date","Proofreading Start Date", 
                 "Proofreading End Date","Formating Start Date","Formating End Date"];
+                const checkboxColumns = ["Book Complete", "Apply ISBN", "ID Proof"];
 
                 // Add event listener to make cells focusable and listen for keyboard events
                 document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
@@ -414,52 +469,58 @@ tr:hover {
                 });
 
                 // Retain existing blur functionality for saving cell changes
-                document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
+                document.querySelectorAll('td').forEach(function (cell) {
                     const columnName = cell.getAttribute('data-column-name');
 
-                    // Check if the column name matches one of the date columns
+                    // Handle date columns with date pickers
                     if (dateColumns.includes(columnName)) {
                         cell.addEventListener('click', function () {
-                            // Make cell editable only for date columns
                             cell.setAttribute('contenteditable', 'false');
 
-                            // Add input element with Flatpickr or native date picker
                             const input = document.createElement('input');
                             input.type = 'text';
                             input.classList.add('date-picker');
-                            input.value = cell.textContent; // Pre-fill value
+                            input.value = cell.textContent;
                             input.style.width = "100%";
 
                             cell.innerHTML = '';
                             cell.appendChild(input);
 
-                            // Initialize Flatpickr (or use native date input)
                             flatpickr(input, {
-                                dateFormat: "d-m-Y", // Display format for the picker
+                                dateFormat: "d-m-Y",
                                 defaultDate: input.value || null,
                                 onChange: function (selectedDates, dateStr) {
-                                    // Transform the date format to DD/MM/YYYY
-                                    const formattedDate = dateStr.replace(/-/g, '/'); // Replace "-" with "/"
-                                    
-                                    // Update cell text on date selection
+                                    const formattedDate = dateStr.replace(/-/g, '/');
                                     cell.textContent = formattedDate;
 
-                                    const row = cell.parentNode.rowIndex + 1; // Row index
-                                    const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1; // Column index
+                                    const row = cell.parentNode.rowIndex + 1;
+                                    const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1;
 
-                                    // Update cell on the server
                                     updateCell(row, originalCol, formattedDate);
 
-                                    // Restore cell to editable after selection
                                     input.remove();
                                     cell.setAttribute('contenteditable', 'true');
                                 }
                             });
-                            input.focus(); // Auto-focus on the input
+                            input.focus();
                         });
                     }
 
-                    // Retain blur functionality for non-date columns
+                    // Handle checkbox columns
+                    if (checkboxColumns.includes(columnName)) {
+                        const checkbox = cell.querySelector('.checkbox-input');
+                        if (checkbox) {
+                            checkbox.addEventListener('change', function () {
+                                const isChecked = checkbox.checked ? "TRUE" : "FALSE"; // Google Sheets expects TRUE/FALSE for checkboxes
+                                const row = cell.parentNode.rowIndex + 1;
+                                const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1;
+
+                                updateCell(row, originalCol, isChecked);
+                            });
+                        }
+                    }
+
+                    // Handle blur for non-date, non-checkbox cells
                     cell.addEventListener('blur', function () {
                         if (cell.getAttribute('contenteditable') === 'true') {
                             const row = cell.parentNode.rowIndex + 1;
@@ -482,6 +543,18 @@ tr:hover {
                     });
                 }
             });
+
+            function updateIcon(checkbox) {
+                const icon = checkbox.nextElementSibling.querySelector('i');
+                if (checkbox.checked) {
+                    icon.classList.remove('fa-times', 'text-danger');
+                    icon.classList.add('fa-check', 'text-success');
+                } else {
+                    icon.classList.remove('fa-check', 'text-success');
+                    icon.classList.add('fa-times', 'text-danger');
+                }
+            }
+
 
             function addNewData() {
                 var newRow = [];
