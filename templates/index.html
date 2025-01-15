@@ -289,7 +289,8 @@ tr:hover {
                                     type="checkbox" 
                                     class="checkbox-input" 
                                     {{ 'checked' if cell == 'TRUE' else '' }} 
-                                    onchange="updateIcon(this)"
+                                    onchange="updateIcon(this)" 
+                                    {% if loop.index0 not in editable_indices %} disabled {% endif %}
                                 >
                                 <span class="checkbox-icon">
                                     {% if cell == 'TRUE' %}
@@ -320,7 +321,8 @@ tr:hover {
                                 <input 
                                     type="checkbox" 
                                     class="checkbox-input" 
-                                    onchange="updateIcon(this)"
+                                    onchange="updateIcon(this)" 
+                                    {% if i not in editable_indices %} disabled {% endif %}
                                 >
                                 <span class="checkbox-icon">
                                     <i class="fa fa-times text-danger"></i>
@@ -329,7 +331,7 @@ tr:hover {
                             </td>
                             {% endfor %}
                         </tr>
-                    </tbody>                                                           
+                    </tbody>                                                                             
                 </table>
             </div>
         </div>
@@ -383,9 +385,16 @@ tr:hover {
 
             document.addEventListener('DOMContentLoaded', function () {
                 let currentCell = null;
-                const dateColumns = ["Date","Writing Start Date", "Writing End Date","Proofreading Start Date", 
-                "Proofreading End Date","Formating Start Date","Formating End Date"];
-                const checkboxColumns = ["Book Complete", "Apply ISBN", "ID Proof"];
+
+                const dateColumns = ["Date", "Receiving Date", "Review Date", "Formatting Date", 
+                "Paper Uploading Date", "Writing Start Date", "Writing End Date","Proofreading Start Date", 
+                "Proofreading End Date","Formating Start Date","Formating End Date","Final Date"];
+
+                const checkboxColumns = ['Book Complete', 'Apply ISBN', 'ID Proof','Welcome Mail / Confirmation', 'Check',
+                    'Author Detail','Photo','Writing Complete','Proofreading Complete',
+                    'Formating Complete', 'Cover Page', 'Back Page Update', 'Send Cover Page and Agreement',
+                    'Agreement Received','Digital Prof', 'Plagiarism Report', 'Confirmation', 'Ready to Print','Print','Final Mail','Deliver',
+                    'Google Review','Writing Complete','Proofreading Complete','Formating Complete','Review Process','Acceptance'];
 
                 // Add event listener to make cells focusable and listen for keyboard events
                 document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
@@ -468,9 +477,14 @@ tr:hover {
                     }
                 });
 
-                // Retain existing blur functionality for saving cell changes
                 document.querySelectorAll('td').forEach(function (cell) {
+                    const isEditable = cell.getAttribute('data-editable') === 'true';
                     const columnName = cell.getAttribute('data-column-name');
+
+                    // Skip non-editable cells
+                    if (!isEditable) {
+                        return;
+                    }
 
                     // Handle date columns with date pickers
                     if (dateColumns.includes(columnName)) {
@@ -511,7 +525,7 @@ tr:hover {
                         const checkbox = cell.querySelector('.checkbox-input');
                         if (checkbox) {
                             checkbox.addEventListener('change', function () {
-                                const isChecked = checkbox.checked ? "TRUE" : "FALSE"; // Google Sheets expects TRUE/FALSE for checkboxes
+                                const isChecked = checkbox.checked ? "TRUE" : "FALSE";
                                 const row = cell.parentNode.rowIndex + 1;
                                 const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1;
 
@@ -540,7 +554,7 @@ tr:hover {
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
                         body: 'row=' + row + '&col=' + col + '&value=' + encodeURIComponent(value),
-                    });
+                    }).catch(error => console.error('Error updating cell:', error));
                 }
             });
 
