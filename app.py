@@ -110,9 +110,59 @@ def redirect_to_dashboard():
             'exp': expiration_time
         }, SECRET_KEY, algorithm='HS256')
 
-        dashboard_url = f"https://agkit.agvolumes.com/?token={token}"
-        #dashboard_url = f"http://localhost:8501/?token={token}"
+        #dashboard_url = f"https://agkit.agvolumes.com/?token={token}"
+        dashboard_url = f"http://localhost:8501/?token={token}"
         app.logger.info("Redirect to Data Dashboard successfully")
+        return redirect(dashboard_url)
+    except Exception as e:
+        app.logger.error(f"Error generating token or redirect URL: {str(e)}")
+        return "Internal Server Error", 500
+    
+@app.route('/redirect_to_ijisem')
+def redirect_to_ijisem():
+    import time
+    if not session.get('logged_in') or session.get('user_role') != 'Admin':
+        app.logger.warning("Unauthorized request to redirect_to_ijisem.")
+        return redirect(url_for('login'))
+
+    try:
+        # Get the current time and add 10 minutes in seconds
+        expiration_time = int(time.time()) + 20 * 60
+        
+        token = encode({
+            'user': session['name'],
+            'role': session['user_role'],
+            'exp': expiration_time
+        }, SECRET_KEY, algorithm='HS256')
+
+        #dashboard_url = f"https://agkit.agvolumes.com/ijisem/?token={token}"
+        dashboard_url = f"http://localhost:8501/ijisem/?token={token}"
+        app.logger.info("Redirect to IJISEM successfully")
+        return redirect(dashboard_url)
+    except Exception as e:
+        app.logger.error(f"Error generating token or redirect URL: {str(e)}")
+        return "Internal Server Error", 500
+    
+@app.route('/redirect_to_agsearch')
+def redirect_to_agsearch():
+    import time
+    if not session.get('logged_in') or session.get('user_role') != 'Admin':
+        app.logger.warning("Unauthorized request to redirect_to_agsearch.")
+        return redirect(url_for('login'))
+
+    try:
+        # Get the current time and add 10 minutes in seconds
+        expiration_time = int(time.time()) + 20 * 60
+        
+        token = encode({
+            'user': session['name'],
+            'role': session['user_role'],
+            'exp': expiration_time
+        }, SECRET_KEY, algorithm='HS256')
+
+        #dashboard_url = f"https://agsearch.agvolumes.com/?token={token}"
+        dashboard_url = f"http://localhost:8502/?token={token}"
+        app.logger.info("Redirect to agsearch successfully")
         return redirect(dashboard_url)
     except Exception as e:
         app.logger.error(f"Error generating token or redirect URL: {str(e)}")
@@ -149,8 +199,8 @@ def redirect_to_adsearch():
             'exp': expiration_time
         }, SECRET_KEY, algorithm='HS256')
 
-        adsearch_url = f"https://agsearch.agvolumes.com/?token={token}"
-        #adsearch_url = f"http://localhost:8502/?token={token}"
+        #adsearch_url = f"https://agsearch.agvolumes.com/?token={token}"
+        adsearch_url = f"http://localhost:8502/?token={token}"
         app.logger.info(f"Redirect to Advance search successfully for user {data['user']}")
         return jsonify({"url": adsearch_url}), 200
     except Exception as e:
@@ -331,7 +381,8 @@ def index():
         sheets=sheets,  # For Admin use
         user_sheets=user_sheets,  # For non-admin users
         current_sheet_name=session.get('current_sheet_name'), 
-        editable_indices=editable_indices
+        editable_indices=editable_indices,
+        filtered_headers = filtered_headers
     )
 
 @app.route('/update', methods=['POST'])
@@ -629,4 +680,4 @@ def get_sheet_columns(sheet_name):
     return jsonify(columns), 200
 
 if __name__ == "__main__":
-    app.run(debug = False)
+    app.run(debug = True)

@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
    body {
             font-family: 'Arial', sans-serif;
@@ -167,6 +169,16 @@ tr:hover {
                 <a class="nav-link" href="{{ url_for('redirect_to_dashboard') }}" target="_blank" style="color:white;">Dashboard</a>
             </li>
                 {% endif %}
+            <li class="nav-item"> 
+                {% if session['user_role'] == 'Admin' %}
+                <a class="nav-link" href="{{ url_for('redirect_to_agsearch') }}" target="_blank" style="color:white;">AdSearch</a>
+            </li>
+                {% endif %}
+            <li class="nav-item"> 
+                {% if session['user_role'] == 'Admin' %}
+                <a class="nav-link" href="{{ url_for('redirect_to_ijisem') }}" target="_blank" style="color:white;">IJISEM</a>
+            </li>
+                {% endif %}
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="sheetDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:white;">
                     Sheets
@@ -249,7 +261,8 @@ tr:hover {
                             {% for cell in row %}
                             <td contenteditable="{{ 'true' if loop.index0 in editable_indices else 'false' }}"
                                 data-editable="{{ 'true' if loop.index0 in editable_indices else 'false' }}"
-                                data-original-index="{{ allowed_indices[loop.index0] }}">{{ cell }}</td>
+                                data-original-index="{{ allowed_indices[loop.index0] }}"
+                                data-column-name="{{ filtered_headers[loop.index0] }}">{{ cell }}</td>
                             {% endfor %}
                         </tr>
                         {% endfor %}
@@ -257,10 +270,12 @@ tr:hover {
                             {% for i in range(columns) %}
                             <td contenteditable="{{ 'true' if i in editable_indices else 'false' }}"
                                 data-editable="{{ 'true' if i in editable_indices else 'false' }}"
-                                data-original-index="{{ allowed_indices[i] }}"></td>
+                                data-original-index="{{ allowed_indices[i] }}"
+                                data-column-name="{{ filtered_headers[i] }}"></td>
                             {% endfor %}
                         </tr>
-                    </tbody>                              
+                    </tbody>
+                                                
                 </table>
             </div>
         </div>
@@ -314,6 +329,8 @@ tr:hover {
 
             document.addEventListener('DOMContentLoaded', function () {
                 let currentCell = null;
+                const dateColumns = ["Date","Writing Start Date", "Writing End Date","Proofreading Start Date", 
+                "Proofreading End Date","Formating Start Date","Formating End Date"];
 
                 // Add event listener to make cells focusable and listen for keyboard events
                 document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
@@ -398,19 +415,63 @@ tr:hover {
 
                 // Retain existing blur functionality for saving cell changes
                 document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
+                    const columnName = cell.getAttribute('data-column-name');
+
+                    // Check if the column name matches one of the date columns
+                    if (dateColumns.includes(columnName)) {
+                        cell.addEventListener('click', function () {
+                            // Make cell editable only for date columns
+                            cell.setAttribute('contenteditable', 'false');
+
+                            // Add input element with Flatpickr or native date picker
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.classList.add('date-picker');
+                            input.value = cell.textContent; // Pre-fill value
+                            input.style.width = "100%";
+
+                            cell.innerHTML = '';
+                            cell.appendChild(input);
+
+                            // Initialize Flatpickr (or use native date input)
+                            flatpickr(input, {
+                                dateFormat: "d-m-Y", // Display format for the picker
+                                defaultDate: input.value || null,
+                                onChange: function (selectedDates, dateStr) {
+                                    // Transform the date format to DD/MM/YYYY
+                                    const formattedDate = dateStr.replace(/-/g, '/'); // Replace "-" with "/"
+                                    
+                                    // Update cell text on date selection
+                                    cell.textContent = formattedDate;
+
+                                    const row = cell.parentNode.rowIndex + 1; // Row index
+                                    const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1; // Column index
+
+                                    // Update cell on the server
+                                    updateCell(row, originalCol, formattedDate);
+
+                                    // Restore cell to editable after selection
+                                    input.remove();
+                                    cell.setAttribute('contenteditable', 'true');
+                                }
+                            });
+                            input.focus(); // Auto-focus on the input
+                        });
+                    }
+
+                    // Retain blur functionality for non-date columns
                     cell.addEventListener('blur', function () {
                         if (cell.getAttribute('contenteditable') === 'true') {
-                            const row = cell.parentNode.rowIndex + 1; // Row index
-                            const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1; // Column index
+                            const row = cell.parentNode.rowIndex + 1;
+                            const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1;
                             const value = cell.textContent;
 
-                            // Update cell on server
                             updateCell(row, originalCol, value);
-                            cell.setAttribute('contenteditable', 'false');
                         }
                     });
                 });
 
+                // Function to send updated data to the server
                 function updateCell(row, col, value) {
                     fetch('/update', {
                         method: 'POST',
