@@ -41,7 +41,6 @@
     margin: 0 auto;
     margin-right: auto;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
     background-color: #fff;
     position: static;
 }
@@ -138,14 +137,15 @@ tr:hover {
 
         /* Updated styles for sticky header */
         thead th {
-            position: sticky;
-            top: 0;
-            z-index: 1000; 
+            
             box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
             border-bottom: 2px solid #ddd; 
         }
 
         thead tr{   
+            position: sticky;
+            top: 0;
+            z-index: 1000; 
             background: linear-gradient(20deg,#4b79a1, #283e51);
         }
 
@@ -162,8 +162,8 @@ tr:hover {
             color: red;
         }
         .table-bordered {
-            border-radius: 8px; /* Adjust the value for more or less rounding */
-            overflow: hidden;   
+            border-radius: 8px; 
+              
         }
 
 
