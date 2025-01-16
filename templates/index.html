@@ -33,18 +33,19 @@
             margin-top: 30px;
             position: relative; /* Ensure scrolling only applies to table content */
         }
-        table {
+    table {
     border-collapse: collapse;
-    width: 100%;
+    border-radius: 10px;
+    width: 95%;
     font-size: 11px;
     margin: 0 auto;
+    margin-right: auto;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     background-color: #fff;
     position: static;
 }
 th {
-    background-color: #266cad;
     color: white;
     text-align: center;
 }
@@ -139,11 +140,13 @@ tr:hover {
         thead th {
             position: sticky;
             top: 0;
-            z-index: 1000; /* Increased to ensure it remains above all other content */
-            background-color: #266cad; /* Ensure header stays solid */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add shadow to define the separation */
-            border-bottom: 2px solid #ddd; /* Optional: stronger bottom border for clarity */
-            
+            z-index: 1000; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            border-bottom: 2px solid #ddd; 
+        }
+
+        thead tr{   
+            background: linear-gradient(20deg,#4b79a1, #283e51);
         }
 
         .checkbox-icon {
@@ -158,6 +161,10 @@ tr:hover {
         .text-danger {
             color: red;
         }
+        .table-bordered {
+            border-radius: 8px; /* Adjust the value for more or less rounding */
+            overflow: hidden;   
+        }
 
 
     </style>
@@ -166,9 +173,9 @@ tr:hover {
 <span id="hiddenSheetName" style="display: none;">{{ current_sheet_name }}</span>
 
 
-<nav class="navbar navbar-expand-lg navbar-light navbar-custom fixed-top">
-    <!-- Add the logo here -->
-    <a class="navbar-brand" href="#">
+<nav class="navbar navbar-expand-lg navbar-light navbar-custom fixed-top" style="background: linear-gradient(90deg, #4b79a1, #283e51); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+
+    <a class="navbar-brand" href="#" style="color: #fff; font-weight: bold; font-size: 18px;">
         <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height: 30px; margin-right: 8px;">
     </a>
     <a class="navbar-brand" id="currentSheetName" href="#" style="color:white;">{{ current_sheet_name }}</a>
