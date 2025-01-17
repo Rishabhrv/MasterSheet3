@@ -1,80 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login to Admin</title>
-    <!-- Google Font Link -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
-    <link rel="apple-touch-icon" sizes="180x180" href="static\images\apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="static\images\favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="static\images\favicon-16x16.png">
-    <link rel="manifest" href="static\images\site.webmanifest">
     <style>
-
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            background-color: #f8f9fa;
+        }
+
+        .gradient-section {
+            /* background: linear-gradient(135deg, #eeaeca, #94bbe9); */
+            background: linear-gradient(135deg, #8BC6EC 0%, #9599E2 100%);
+
+            border-radius: 18px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            padding: 60px 80px;
+            width: 60%;
         }
 
         .login-form {
-            width: 100%;
-            max-width: 400px;
-            padding: 15px;
-            margin: 0 auto;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #fff;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            text-align: center;
+            width: 55%;
+            margin-left: auto;
+            margin-right: auto
         }
-        
+
         .login-form img {
-            max-width: 50%;
-            height: auto;
-            display: block;
-            margin: 0 auto 20px;
+            width: 50%;
+            margin-bottom: 20px;
         }
 
         .login-form h2 {
-            margin-bottom: 15px;
-            font-family: 'Roboto', sans-serif; 
-            font-weight: 700; 
-            font-size: 24px; 
-            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #4b79a1;
+        }
+
+        .form-group label {
+            color: #333;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4b79a1, #283e51);
+            border: none;
+            color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(50deg, #8BC6EC 0%, #9599E2 100%);
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            border-radius: 10px;
         }
     </style>
-
 </head>
 <body>
-    <div class="login-form">
-        <!-- Logo Image -->
-        <img src="static\images\logo_black.png" alt="Logo">
-        
-        <h2 class="text-center">Login</h2>
-        <form method="POST" action="/login">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            {% if error %}
-            <div class="alert alert-danger" role="alert">
-                {{ error }}
-            </div>
-            {% endif %}
-            <button type="submit" class="btn btn-primary btn-block">Login</button>
-        </form>
+    <div class="gradient-section">
+        <div class="login-form">
+            <img src="static/images/logo_black.png" alt="Logo">
+            <h2>Login</h2>
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+        </div>
     </div>
-    </body>
+</body>
 </html>
