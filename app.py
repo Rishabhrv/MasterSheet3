@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 import gspread
 import pytz
+from pytz import timezone
 from flask import (Flask, jsonify, redirect,
                    render_template, request, session, url_for)
 from google.oauth2.service_account import Credentials
@@ -28,11 +29,24 @@ sheets_json_path = os.getenv('SHEETS_JSON_PATH', 'sheets.json')
 credentials = Credentials.from_service_account_file(creds_path, scopes = scope)
 gc = gspread.authorize(credentials)
 
-# Configure the rotating log handler
+# Custom Formatter for IST Time Zone
+class ISTFormatter(logging.Formatter):
+    def __init__(self, fmt=None, datefmt=None):
+        super().__init__(fmt, datefmt)
+        self.ist = timezone('Asia/Kolkata')
+
+    def formatTime(self, record, datefmt=None):
+        record_time = datetime.fromtimestamp(record.created, self.ist)
+        return record_time.strftime(datefmt or self.default_time_format)
+
+# Configure the log file and handler
 LOG_FILENAME = 'app.log'
-log_handler = RotatingFileHandler(LOG_FILENAME, maxBytes=5*1024*1024, backupCount=5)
+log_handler = RotatingFileHandler(LOG_FILENAME, maxBytes=5*1024*1024, backupCount=10)
 log_handler.setLevel(logging.INFO)
-log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+# Set the custom formatter for IST
+log_format = '%(asctime)s - %(levelname)s - %(message)s'
+log_handler.setFormatter(ISTFormatter(fmt=log_format, datefmt='%d-%m-%Y %H:%M:%S'))
 
 # Get the root logger and set its handler
 logger = logging.getLogger()
@@ -40,7 +54,7 @@ logger.setLevel(logging.INFO)
 logger.addHandler(log_handler)
 
 werkzeug_logger = logging.getLogger('werkzeug')
-werkzeug_logger.setLevel(logging.WARNING)  
+werkzeug_logger.setLevel(logging.WARNING)
 
 def read_users_from_json():
     if os.path.exists(users_json_path):
