@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from logging.handlers import RotatingFileHandler
 import gspread
 import pytz
@@ -85,7 +85,8 @@ users = read_users_from_json()
 def utility_processor():
     return dict(enumerate=enumerate)
 
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=120)
+
 
 @app.before_request
 def manage_session():
@@ -215,21 +216,49 @@ def redirect_to_adsearch():
 
         adsearch_url = f"https://agsearch.agvolumes.com/?token={token}"
         #adsearch_url = f"http://localhost:8502/?token={token}"
-        app.logger.info(f"Redirect to Advance search successfully for user {data['user']}")
         return jsonify({"url": adsearch_url}), 200
     except Exception as e:
-        app.logger.error(f"Error in /redirect_to_adsearch: {str(e)}")
+        app.logger.error(f"Error in /redirect_to_adsearch API: {str(e)}")
         return jsonify({"error": "Internal Server Error"}), 500
 
 
 @app.route('/logout')
 def logout():
-    username = session.get('name', 'Unknown User')  # Retrieve the username from session
-    app.logger.info(f'User {username} logged out.')
-    
-    session.clear()  # Clear session after logging out
+    username = session.get('name', 'Unknown User')
+    start_time = session.get('start_time')
+    end_time = datetime.now(timezone.utc)
+
+    if start_time:
+        if isinstance(start_time, str):
+            start_time = datetime.fromisoformat(start_time)
+        session_duration = end_time - start_time
+        formatted_duration = f"{session_duration.seconds // 60} min {session_duration.seconds % 60} sec"
+        app.logger.info(f'User {username} logged out. Session duration: {formatted_duration}')
+    else:
+        app.logger.info(f'User {username} logged out but session start time not found.')
+
+    session.clear()
     return redirect(url_for('login'))
- 
+
+
+@app.route('/session_end', methods=['POST'])
+def session_end():
+    username = session.get('name', 'Unknown User')
+    start_time = session.get('start_time')
+    end_time = datetime.now(timezone.utc)
+
+    if start_time:
+        if isinstance(start_time, str):
+            start_time = datetime.fromisoformat(start_time)
+        session_duration = end_time - start_time
+        formatted_duration = f"{session_duration.seconds // 60} min {session_duration.seconds % 60} sec"
+        app.logger.info(f'User {username} session ended. Duration: {formatted_duration}')
+    else:
+        app.logger.info(f'Session ended for user {username} but no start time found.')
+
+    return '', 204
+
+
 def is_access_allowed():
     india_tz = pytz.timezone('Asia/Kolkata')
     current_time = datetime.now(india_tz).time()
@@ -279,7 +308,8 @@ def set_user_sheet_session(sheet_name, sheet_id=None):
         else:
             app.logger.warning(f"Unauthorized access attempt by user: {session.get('user_role')}")
             raise PermissionError("Unauthorized access")
-
+        
+from datetime import datetime, timezone
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if session.get('logged_in'):
@@ -303,6 +333,7 @@ def login():
                 session['logged_in'] = True
                 session['user_role'] = user['role']
                 session['name'] = user['name']
+                session['start_time'] = datetime.now(timezone.utc).isoformat()
                 # Load sheets and their specific permissions for the user
                 if user['role'] == 'Admin':
                     # Admin has access to all sheets

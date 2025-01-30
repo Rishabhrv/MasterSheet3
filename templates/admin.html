@@ -1082,6 +1082,10 @@
             row.style.display === "table-row" ? "none" : "table-row";
         });
       });
+
+      window.addEventListener('beforeunload', function () {
+        navigator.sendBeacon('/session_end');
+    });
     </script>
   </body>
 </html>

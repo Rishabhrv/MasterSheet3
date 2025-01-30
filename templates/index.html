@@ -166,6 +166,47 @@ tr:hover {
               
         }
 
+        td[contenteditable="true"] {
+            white-space: normal !important; /* Ensures text wraps instead of expanding */
+            overflow: hidden; /* Prevents extra spaces from shifting content */
+        }
+
+        .toast {
+        display: none; /* Initially hidden */
+        position: fixed;
+        bottom: 20px;
+        left: 20px; /* Moved to bottom-left */
+        background: #222;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        max-width: 350px; /* Increased size */
+        font-size: 15px;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        border-left: 5px solid #ffcc00; /* Fun yellow border */
+    }
+
+    .toast p {
+        margin: 5px 0;
+    }
+
+    .close-toast {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        font-size: 20px;
+        cursor: pointer;
+        color: white;
+    }
+
+    .close-toast:hover {
+        color: #ff4d4d;
+    }
+
+
 
     </style>
 </head>
@@ -372,6 +413,14 @@ tr:hover {
     </div>
 </div>
 
+
+<div id="updateToast" class="toast">
+    <p><strong>🚀 New Feature Update!</strong></p>
+    <p>Effortlessly navigate with arrow keys and use <strong>Ctrl + C</strong>, <strong>Ctrl + X</strong>, and <strong>Ctrl + V</strong> for Cut, Copy, and Paste—just like Google Sheets! 🎉</p>
+    <span class="close-toast" onclick="closeUpdateToast()">&times;</span>
+</div>
+
+
 <!-- Feedback Modal -->
 <div class="modal fade" id="feedbackModal" tabindex="-1" role="dialog" aria-labelledby="feedbackModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -392,10 +441,11 @@ tr:hover {
 
             document.addEventListener('DOMContentLoaded', function () {
                 let currentCell = null;
+                let copiedText = "";
 
                 const dateColumns = ["Date", "Receiving Date", "Review Date", "Formatting Date", 
                 "Paper Uploading Date", "Writing Start Date", "Writing End Date","Proofreading Start Date", 
-                "Proofreading End Date","Formating Start Date","Formating End Date","Final Date"];
+                "Proofreading End Date","Formating Start Date","Formating End Date","Final Date","Delivery Date"];
 
                 const checkboxColumns = ['Book Complete', 'Apply ISBN', 'ID Proof','Welcome Mail / Confirmation', 'Check',
                     'Author Detail','Photo','Writing Complete','Proofreading Complete',
@@ -407,8 +457,39 @@ tr:hover {
                 document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
                     cell.setAttribute('tabindex', '0'); // Make cells focusable for keyboard navigation
                     cell.addEventListener('focus', function () {
+                        cell.textContent = cell.textContent.replace(/\u00A0/g, '').trim();
+                        cell.setAttribute('data-old-value', cell.textContent.trim());
                         currentCell = cell; // Track the currently focused cell
                     });
+                });
+
+                // Listen for keydown events to handle copy-paste-cut functionality
+                document.addEventListener('keydown', function (event) {
+                    if (!currentCell) return;
+
+                    if (event.ctrlKey || event.metaKey) { // Detect Ctrl (Windows/Linux) or Cmd (Mac)
+                        switch (event.key) {
+                            case 'c': // Ctrl + C (Copy)
+                                event.preventDefault();
+                                copiedText = currentCell.textContent.trim();
+                                navigator.clipboard.writeText(copiedText);
+                                break;
+
+                            case 'x': // Ctrl + X (Cut)
+                                event.preventDefault();
+                                copiedText = currentCell.textContent.trim();
+                                navigator.clipboard.writeText(copiedText);
+                                currentCell.textContent = ""; // Clear the cell after cutting
+                                break;
+
+                            case 'v': // Ctrl + V (Paste)
+                                event.preventDefault();
+                                if (copiedText) {
+                                    currentCell.textContent = copiedText;
+                                }
+                                break;
+                        }
+                    }
                 });
 
                 // Add paste handler to all editable cells
@@ -422,7 +503,7 @@ tr:hover {
                         const plainText = clipboardData.getData('text/plain');
 
                         // Insert the plain text into the cell
-                        document.execCommand('insertText', false, plainText);
+                        currentCell.textContent = plainText.trim();
                     });
                 });
 
@@ -541,20 +622,24 @@ tr:hover {
                         }
                     }
 
-                    // Handle blur for non-date, non-checkbox cells
                     cell.addEventListener('blur', function () {
                         if (cell.getAttribute('contenteditable') === 'true') {
                             const row = cell.parentNode.rowIndex + 1;
                             const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1;
-                            const value = cell.textContent;
+                            const newValue = cell.textContent.trim(); // Trim spaces to prevent unnecessary updates
+                            const oldValue = cell.getAttribute('data-old-value'); // Store the previous value
 
-                            updateCell(row, originalCol, value);
+                            if (newValue !== oldValue) {  // Only update if the value has changed
+                                cell.setAttribute('data-old-value', newValue); // Store new value for future comparisons
+                                updateCell(row, originalCol, newValue);
+                            }
                         }
                     });
                 });
 
                 // Function to send updated data to the server
                 function updateCell(row, col, value) {
+                    value = value.trim();
                     fetch('/update', {
                         method: 'POST',
                         headers: {
@@ -811,6 +896,32 @@ function updateSheetList(sheetName, sheetId) {
         return -1;
     }
 
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const updateVersion = "1"; // 🔥 Change this when adding new features
+        const savedVersion = localStorage.getItem("updateToastVersion");
+
+        if (savedVersion !== updateVersion) {
+            let toast = document.getElementById("updateToast");
+            toast.style.display = "block";
+            setTimeout(() => toast.style.opacity = "1", 100); // Fade in effect
+        }
+    });
+
+    function closeUpdateToast() {
+        let toast = document.getElementById("updateToast");
+        toast.style.opacity = "0";
+        setTimeout(() => toast.style.display = "none", 500); // Fade out
+        localStorage.setItem("updateToastVersion", "2"); // 🔥 Store the version
+    }
+
+
+    window.addEventListener('beforeunload', function () {
+        navigator.sendBeacon('/session_end');
+    });
+
+    
+
 </script>
 </body>
-</html>
+</html> 
