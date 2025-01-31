@@ -241,24 +241,6 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/session_end', methods=['POST'])
-def session_end():
-    username = session.get('name', 'Unknown User')
-    start_time = session.get('start_time')
-    end_time = datetime.now(timezone.utc)
-
-    if start_time:
-        if isinstance(start_time, str):
-            start_time = datetime.fromisoformat(start_time)
-        session_duration = end_time - start_time
-        formatted_duration = f"{session_duration.seconds // 60} min {session_duration.seconds % 60} sec"
-        app.logger.info(f'User {username} session ended. Duration: {formatted_duration}')
-    else:
-        app.logger.info(f'Session ended for user {username} but no start time found.')
-
-    return '', 204
-
-
 def is_access_allowed():
     india_tz = pytz.timezone('Asia/Kolkata')
     current_time = datetime.now(india_tz).time()

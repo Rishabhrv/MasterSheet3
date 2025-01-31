@@ -416,7 +416,7 @@ tr:hover {
 
 <div id="updateToast" class="toast">
     <p><strong>🚀 New Feature Update!</strong></p>
-    <p>Effortlessly navigate with arrow keys and use <strong>Ctrl + C</strong>, <strong>Ctrl + X</strong>, and <strong>Ctrl + V</strong> for Cut, Copy, and Paste—just like Google Sheets! 🎉</p>
+    <p>Effortlessly navigate with arrow keys and use <strong>Ctrl + Z</strong>,<strong>Ctrl + C</strong>, <strong>Ctrl + X</strong>, and <strong>Ctrl + V</strong> for Undo, Cut, Copy, and Paste—just like Google Sheets! 🎉</p>
     <span class="close-toast" onclick="closeUpdateToast()">&times;</span>
 </div>
 
@@ -442,6 +442,8 @@ tr:hover {
             document.addEventListener('DOMContentLoaded', function () {
                 let currentCell = null;
                 let copiedText = "";
+                let history = [];  // Stores all changes for undo/redo
+                let redoStack = []; // Stores undone changes for redo
 
                 const dateColumns = ["Date", "Receiving Date", "Review Date", "Formatting Date", 
                 "Paper Uploading Date", "Writing Start Date", "Writing End Date","Proofreading Start Date", 
@@ -467,26 +469,37 @@ tr:hover {
                 document.addEventListener('keydown', function (event) {
                     if (!currentCell) return;
 
-                    if (event.ctrlKey || event.metaKey) { // Detect Ctrl (Windows/Linux) or Cmd (Mac)
+                    if (event.ctrlKey || event.metaKey) {
                         switch (event.key) {
-                            case 'c': // Ctrl + C (Copy)
+                            case 'c': // Copy
                                 event.preventDefault();
                                 copiedText = currentCell.textContent.trim();
                                 navigator.clipboard.writeText(copiedText);
                                 break;
 
-                            case 'x': // Ctrl + X (Cut)
+                            case 'x': // Cut
                                 event.preventDefault();
                                 copiedText = currentCell.textContent.trim();
                                 navigator.clipboard.writeText(copiedText);
-                                currentCell.textContent = ""; // Clear the cell after cutting
+                                currentCell.textContent = "";
                                 break;
 
-                            case 'v': // Ctrl + V (Paste)
+                            case 'v': // Paste
                                 event.preventDefault();
                                 if (copiedText) {
                                     currentCell.textContent = copiedText;
+                                    saveEdit(currentCell, copiedText); // Save to history
                                 }
+                                break;
+
+                            case 'z': // Undo
+                                event.preventDefault();
+                                undoEdit();
+                                break;
+
+                            case 'y': // Redo
+                                event.preventDefault();
+                                redoEdit();
                                 break;
                         }
                     }
@@ -501,9 +514,10 @@ tr:hover {
                         // Get plain text from clipboard
                         const clipboardData = event.clipboardData || window.clipboardData;
                         const plainText = clipboardData.getData('text/plain');
-
+                        saveEdit(currentCell, plainText.trim()); // Save to history
                         // Insert the plain text into the cell
                         currentCell.textContent = plainText.trim();
+                        
                     });
                 });
 
@@ -626,28 +640,70 @@ tr:hover {
                         if (cell.getAttribute('contenteditable') === 'true') {
                             const row = cell.parentNode.rowIndex + 1;
                             const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1;
-                            const newValue = cell.textContent.trim(); // Trim spaces to prevent unnecessary updates
-                            const oldValue = cell.getAttribute('data-old-value'); // Store the previous value
+                            const newValue = cell.textContent.trim(); 
+                            const oldValue = cell.getAttribute('data-old-value'); 
 
-                            if (newValue !== oldValue) {  // Only update if the value has changed
-                                cell.setAttribute('data-old-value', newValue); // Store new value for future comparisons
+                            if (newValue !== oldValue) {  
+                                saveEdit(cell, newValue, oldValue); // Store in history
+                                cell.setAttribute('data-old-value', newValue);
                                 updateCell(row, originalCol, newValue);
                             }
                         }
                     });
                 });
 
+
+                // Function to save edit to history
+                function saveEdit(cell, newValue, oldValue = null) {
+                    if (!oldValue) oldValue = cell.getAttribute('data-old-value') || "";
+
+                    // Only save changes if the value actually changes
+                    if (newValue !== oldValue) {
+                        history.push({ cell, oldValue, newValue });
+                        redoStack = []; // Clear redo history when a new edit is made
+                    }
+                }
+
+                // Undo last change
+                function undoEdit() {
+                    if (history.length === 0) return;
+
+                    let lastEdit = history.pop();
+                    redoStack.push({ cell: lastEdit.cell, oldValue: lastEdit.newValue, newValue: lastEdit.oldValue });
+
+                    lastEdit.cell.textContent = lastEdit.oldValue;
+                    lastEdit.cell.setAttribute('data-old-value', lastEdit.oldValue);
+                    sendUpdate(lastEdit.cell, lastEdit.oldValue);
+                }
+
+                // Redo last undone change
+                function redoEdit() {
+                    if (redoStack.length === 0) return;
+
+                    let lastUndo = redoStack.pop();
+                    history.push({ cell: lastUndo.cell, oldValue: lastUndo.oldValue, newValue: lastUndo.newValue });
+
+                    lastUndo.cell.textContent = lastUndo.newValue;
+                    lastUndo.cell.setAttribute('data-old-value', lastUndo.newValue);
+                    sendUpdate(lastUndo.cell, lastUndo.newValue);
+                }
+
+                // Function to update server
+                function sendUpdate(cell, value) {
+                    const row = cell.parentNode.rowIndex + 1;
+                    const originalCol = parseInt(cell.getAttribute('data-original-index'), 10) + 1;
+                    updateCell(row, originalCol, value);
+                }
+
                 // Function to send updated data to the server
                 function updateCell(row, col, value) {
-                    value = value.trim();
                     fetch('/update', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: 'row=' + row + '&col=' + col + '&value=' + encodeURIComponent(value),
                     }).catch(error => console.error('Error updating cell:', error));
                 }
+
             });
 
             function updateIcon(checkbox) {
@@ -898,7 +954,7 @@ function updateSheetList(sheetName, sheetId) {
 
 
     document.addEventListener("DOMContentLoaded", function () {
-        const updateVersion = "1"; // 🔥 Change this when adding new features
+        const updateVersion = "3"; // 🔥 Change this when adding new features
         const savedVersion = localStorage.getItem("updateToastVersion");
 
         if (savedVersion !== updateVersion) {
@@ -912,13 +968,8 @@ function updateSheetList(sheetName, sheetId) {
         let toast = document.getElementById("updateToast");
         toast.style.opacity = "0";
         setTimeout(() => toast.style.display = "none", 500); // Fade out
-        localStorage.setItem("updateToastVersion", "2"); // 🔥 Store the version
+        localStorage.setItem("updateToastVersion", "3"); // 🔥 Store the version
     }
-
-
-    window.addEventListener('beforeunload', function () {
-        navigator.sendBeacon('/session_end');
-    });
 
     
 
