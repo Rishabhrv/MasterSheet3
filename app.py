@@ -13,7 +13,7 @@ from flask_mail import Mail, Message
 import random
 import string
 from werkzeug.exceptions import BadRequest
-from jwt import encode
+import jwt
 from dotenv import load_dotenv
 
 
@@ -226,7 +226,7 @@ def redirect_to_content_dashboard():
     try:
         expiration_time = int(time.time()) + 20 * 60
         
-        token = encode({
+        token = jwt.encode({
             'user': session['name'],
             'role': session['user_role'],
             'exp': expiration_time
@@ -251,7 +251,7 @@ def redirect_to_proofread_dashboard():
     try:
         expiration_time = int(time.time()) + 20 * 60
         
-        token = encode({
+        token = jwt.encode({
             'user': session['name'],
             'role': session['user_role'],
             'exp': expiration_time
@@ -277,7 +277,7 @@ def redirect_to_dashboard():
         # Get the current time and add 10 minutes in seconds
         expiration_time = int(time.time()) + 20 * 60
         
-        token = encode({
+        token = jwt.encode({
             'user': session['name'],
             'role': session['user_role'],
             'exp': expiration_time
@@ -302,7 +302,7 @@ def redirect_to_ijisem():
         # Get the current time and add 10 minutes in seconds
         expiration_time = int(time.time()) + 20 * 60
         
-        token = encode({
+        token = jwt.encode({
             'user': session['name'],
             'role': session['user_role'],
             'exp': expiration_time
@@ -327,7 +327,7 @@ def redirect_to_agsearch():
         # Get the current time and add 10 minutes in seconds
         expiration_time = int(time.time()) + 20 * 60
         
-        token = encode({
+        token = jwt.encode({
             'user': session['name'],
             'role': session['user_role'],
             'exp': expiration_time
@@ -366,7 +366,7 @@ def redirect_to_adsearch():
 
         # Generate token and construct URL
         expiration_time = int(time.time()) + 10 * 60
-        token = encode({
+        token = jwt.encode({
             'user': data['user'],
             'role': data['role'],
             'exp': expiration_time
