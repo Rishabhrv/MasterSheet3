@@ -243,6 +243,16 @@ tr:hover {
                 <a class="nav-link" href="{{ url_for('redirect_to_ijisem') }}" target="_blank" style="color:white;">IJISEM</a>
             </li>
                 {% endif %}
+            <li class="nav-item"> 
+                {% if session['user_role'] == 'Content Writer' %}
+                <a class="nav-link" href="{{ url_for('redirect_to_content_dashboard') }}" target="_blank" style="color:white;">Dashboard</a>
+            </li>
+                {% endif %}
+            <li class="nav-item"> 
+                {% if session['user_role'] == 'Proofreader' %}
+                <a class="nav-link" href="{{ url_for('redirect_to_proofread_dashboard') }}" target="_blank" style="color:white;">Dashboard</a>
+            </li>
+                {% endif %}
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="sheetDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:white;">
                     Sheets
@@ -340,13 +350,7 @@ tr:hover {
                                     onchange="updateIcon(this)" 
                                     {% if loop.index0 not in editable_indices %} disabled {% endif %}
                                 >
-                                <span class="checkbox-icon">
-                                    {% if cell == 'TRUE' %}
-                                    <i class="fa fa-check text-success"></i>
-                                    {% else %}
-                                    <i class="fa fa-times text-danger"></i>
-                                    {% endif %}
-                                </span>
+                                
                                 {% else %}
                                 {{ cell }}
                                 {% endif %}
@@ -369,12 +373,11 @@ tr:hover {
                                 <input 
                                     type="checkbox" 
                                     class="checkbox-input" 
+                                    {{ 'checked' if cell == 'TRUE' else '' }}
                                     onchange="updateIcon(this)" 
                                     {% if i not in editable_indices %} disabled {% endif %}
                                 >
-                                <span class="checkbox-icon">
-                                    <i class="fa fa-times text-danger"></i>
-                                </span>
+                
                                 {% endif %}
                             </td>
                             {% endfor %}
@@ -416,7 +419,7 @@ tr:hover {
 
 <div id="updateToast" class="toast">
     <p><strong>🚀 New Feature Update!</strong></p>
-    <p>Effortlessly navigate with arrow keys and use <strong>Ctrl + Z</strong>,<strong>Ctrl + C</strong>, <strong>Ctrl + X</strong>, and <strong>Ctrl + V</strong> for Undo, Cut, Copy, and Paste—just like Google Sheets! 🎉</p>
+    <p>Dashboard access unlocked! 🎉 Dive in and explore your work and team's performance.</p>
     <span class="close-toast" onclick="closeUpdateToast()">&times;</span>
 </div>
 
@@ -504,6 +507,8 @@ tr:hover {
                         }
                     }
                 });
+
+
 
                 // Add paste handler to all editable cells
                 document.querySelectorAll('td[data-editable="true"]').forEach(function (cell) {
@@ -705,17 +710,6 @@ tr:hover {
                 }
 
             });
-
-            function updateIcon(checkbox) {
-                const icon = checkbox.nextElementSibling.querySelector('i');
-                if (checkbox.checked) {
-                    icon.classList.remove('fa-times', 'text-danger');
-                    icon.classList.add('fa-check', 'text-success');
-                } else {
-                    icon.classList.remove('fa-check', 'text-success');
-                    icon.classList.add('fa-times', 'text-danger');
-                }
-            }
 
 
             function addNewData() {
@@ -954,7 +948,7 @@ function updateSheetList(sheetName, sheetId) {
 
 
     document.addEventListener("DOMContentLoaded", function () {
-        const updateVersion = "3"; // 🔥 Change this when adding new features
+        const updateVersion = "4"; // 🔥 Change this when adding new features
         const savedVersion = localStorage.getItem("updateToastVersion");
 
         if (savedVersion !== updateVersion) {
@@ -968,7 +962,7 @@ function updateSheetList(sheetName, sheetId) {
         let toast = document.getElementById("updateToast");
         toast.style.opacity = "0";
         setTimeout(() => toast.style.display = "none", 500); // Fade out
-        localStorage.setItem("updateToastVersion", "3"); // 🔥 Store the version
+        localStorage.setItem("updateToastVersion", "4"); // 🔥 Store the version
     }
 
     

@@ -7,8 +7,11 @@ import gspread
 import pytz
 from pytz import timezone
 from flask import (Flask, jsonify, redirect,
-                   render_template, request, session, url_for)
+                   render_template, request, session, url_for, flash)
 from google.oauth2.service_account import Credentials
+from flask_mail import Mail, Message
+import random
+import string
 from werkzeug.exceptions import BadRequest
 from jwt import encode
 from dotenv import load_dotenv
@@ -25,6 +28,22 @@ scope = ["https://www.googleapis.com/auth/spreadsheets"]
 creds_path = os.getenv('CREDS_PATH', 'token.json')
 users_json_path = os.getenv('USERS_JSON_PATH', 'users.json')
 sheets_json_path = os.getenv('SHEETS_JSON_PATH', 'sheets.json')
+
+
+load_dotenv()
+
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+
+mail = Mail(app)
+
+# Temporary storage for OTPs
+otp_store = {}  
 
 credentials = Credentials.from_service_account_file(creds_path, scopes = scope)
 gc = gspread.authorize(credentials)
@@ -93,7 +112,9 @@ def manage_session():
     session.permanent = True
 
     # Bypass the check if we're on the login, logout, or static routes
-    if request.endpoint in ('login', 'static', 'logout','redirect_to_adsearch'):
+    if request.endpoint in ('login', 'static', 'logout',
+                            'redirect_to_adsearch',
+                            'forgot_password', 'reset_password'):
         return None
 
     # If user is not logged in, redirect to login
@@ -106,6 +127,143 @@ def manage_session():
             username = session.get('name', 'Unknown User')
             app.logger.info(f'Logging out user {username} due to time restriction.')
             return redirect(url_for('logout'))
+        
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        
+        # Load user data
+        users = read_users_from_json()
+        user = next((u for u in users if u['email'] == email), None)
+
+        if user:
+            
+            # Allow password reset only if email belongs to an Admin
+            if user.get('role') != 'Admin':  
+                flash("Only Admins can reset their password.", "danger")
+                logging.warning(f"Unauthorized password reset attempt by non-admin: {email}")
+                return redirect(url_for('login'))
+            
+            # Generate OTP
+            otp = ''.join(random.choices(string.digits, k=6))  # 6-digit OTP
+            otp_store[email] = otp
+
+            # Send OTP via email
+            msg = Message('MasterSheet Password Reset', recipients=[email])
+            msg.body = f"""
+            Dear User,
+
+            You have requested to reset your password. Please use the One-Time Password (OTP) below to proceed with the reset:
+
+            🔑 OTP: {otp}
+
+            For security reasons, this OTP is valid for a limited time and should not be shared with anyone. If you did not request a password reset, please ignore this email."""
+            mail.send(msg)
+
+            logging.info(f"OTP sent to Admin {email} for password reset.")
+
+            flash('An OTP has been sent to your email.', 'info')
+            return redirect(url_for('reset_password', email=email))
+        else:
+            flash('Email not found!', 'danger')
+            logging.warning(f"Password reset attempt with non-existent email: {email}")
+
+    return render_template('forgot_password.html')
+
+
+@app.route('/reset-password/<email>', methods=['GET', 'POST'])
+def reset_password(email):
+    # Load user data
+    users = read_users_from_json()
+    user = next((u for u in users if u['email'] == email), None)
+
+    # Ensure email exists and belongs to an Admin
+    if not user or user.get('role') != 'Admin':
+        flash("Only Admins can reset their password.", "danger")
+        logging.warning(f"Unauthorized reset password access attempt by: {email}")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        entered_otp = request.form['otp']
+        new_password = request.form['new_password']
+
+        # Validate OTP
+        if otp_store.get(email) == entered_otp:
+            # Update password in the user database
+            for user in users:
+                if user['email'] == email:
+                    user['pass'] = new_password
+                    break
+
+            write_users_to_json(users)  # Save changes
+            otp_store.pop(email, None)  # Remove OTP after use
+
+            logging.info(f"Admin {email} successfully reset their password.")
+
+            flash('Password reset successfully.', 'success')
+            session.modified = True
+            return redirect(url_for('login'))
+        else:
+            flash('Invalid OTP. Please try again.', 'danger')
+            logging.warning(f"Invalid OTP entered for {email}.")
+
+    return render_template('reset_password.html', email=email)
+
+
+@app.route('/redirect_to_content_dashboard')
+def redirect_to_content_dashboard():
+    import time
+    if not session.get('logged_in') or session.get('user_role') != 'Content Writer':
+        app.logger.warning("Unauthorized request to redirect_to_content_dashboard.")
+        return redirect(url_for('login'))
+
+    try:
+        expiration_time = int(time.time()) + 20 * 60
+        
+        token = encode({
+            'user': session['name'],
+            'role': session['user_role'],
+            'exp': expiration_time
+        }, SECRET_KEY, algorithm='HS256')
+
+        dashboard_url = f"https://agkit.agvolumes.com/teamdash?token={token}"
+        #dashboard_url = f"http://localhost:8501/teamdash?token={token}"
+        app.logger.info("Redirect to Content Data Dashboard successfully")
+        return redirect(dashboard_url)
+    except Exception as e:
+        app.logger.error(f"Error generating token or redirect URL: {str(e)}")
+        return "Internal Server Error", 500
+    
+
+@app.route('/redirect_to_proofread_dashboard')
+def redirect_to_proofread_dashboard():
+    import time
+    if not session.get('logged_in') or session.get('user_role') != 'Proofreader':
+        app.logger.warning("Unauthorized request to redirect_to_proofread_dashboard.")
+        return redirect(url_for('login'))
+
+    try:
+        expiration_time = int(time.time()) + 20 * 60
+        
+        token = encode({
+            'user': session['name'],
+            'role': session['user_role'],
+            'exp': expiration_time
+        }, SECRET_KEY, algorithm='HS256')
+
+        dashboard_url = f"https://agkit.agvolumes.com/teamdash?token={token}"
+        #dashboard_url = f"http://localhost:8501/teamdash?token={token}"
+        app.logger.info("Redirect to Proofread Data Dashboard successfully")
+        return redirect(dashboard_url)
+    except Exception as e:
+        app.logger.error(f"Error generating token or redirect URL: {str(e)}")
+        return "Internal Server Error", 500
 
         
 @app.route('/redirect_to_dashboard')
