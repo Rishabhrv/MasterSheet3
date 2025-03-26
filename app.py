@@ -295,7 +295,7 @@ def redirect_to_dashboard():
 @app.route('/redirect_to_newcrm')
 def redirect_to_newcrm():
     import time
-    if not session.get('logged_in') or session.get('user_role') != 'Book Entry':
+    if not session.get('logged_in') or (session.get('user_role') != 'Book Entry' and session.get('user_role') != 'Admin'):
         app.logger.warning("Unauthorized request to redirect_to_newcrm.")
         return redirect(url_for('login'))
 
