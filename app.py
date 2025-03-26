@@ -113,7 +113,7 @@ def manage_session():
 
     # Bypass the check if we're on the login, logout, or static routes
     if request.endpoint in ('login', 'static', 'logout',
-                            'redirect_to_adsearch',
+                            'redirect_to_adsearch', 'redirect_to_newcrm',
                             'forgot_password', 'reset_password'):
         return None
 
@@ -291,6 +291,33 @@ def redirect_to_dashboard():
         app.logger.error(f"Error generating token or redirect URL: {str(e)}")
         return "Internal Server Error", 500
     
+
+@app.route('/redirect_to_newcrm')
+def redirect_to_newcrm():
+    import time
+    if not session.get('logged_in') or session.get('user_role') != 'Book Entry':
+        app.logger.warning("Unauthorized request to redirect_to_newcrm.")
+        return redirect(url_for('login'))
+
+    try:
+        # Get the current time and add 10 minutes in seconds
+        expiration_time = int(time.time()) + 60 * 60
+        
+        token = jwt.encode({
+            'user': session['name'],
+            'role': session['user_role'],
+            'exp': expiration_time
+        }, SECRET_KEY, algorithm='HS256')
+
+        dashboard_url = f"https://newcrm.agvolumes.com/?token={token}"
+        #dashboard_url = f"http://localhost:8501/?token={token}"
+        app.logger.info("Redirect to New CRM successfully")
+        return redirect(dashboard_url)
+    except Exception as e:
+        app.logger.error(f"Error generating token or redirect URL: {str(e)}")
+        return "Internal Server Error", 500
+
+
 @app.route('/redirect_to_ijisem')
 def redirect_to_ijisem():
     import time

@@ -253,6 +253,11 @@ tr:hover {
                 <a class="nav-link" href="{{ url_for('redirect_to_proofread_dashboard') }}" target="_blank" style="color:white;">Dashboard</a>
             </li>
                 {% endif %}
+                <li class="nav-item"> 
+                    {% if session['user_role'] == 'Book Entry' or session['user_role'] == 'Admin' %}
+                    <a class="nav-link" href="{{ url_for('redirect_to_newcrm') }}" target="_blank" style="color:white;">Add New Book</a>
+                </li>
+                {% endif %}
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="sheetDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:white;">
                     Sheets
