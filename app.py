@@ -219,7 +219,7 @@ def reset_password(email):
 @app.route('/redirect_to_content_dashboard')
 def redirect_to_content_dashboard():
     import time
-    if not session.get('logged_in') or session.get('user_role') != 'Content Writer':
+    if not session.get('logged_in') or session.get('user_role') != 'Writer':
         app.logger.warning("Unauthorized request to redirect_to_content_dashboard.")
         return redirect(url_for('login'))
 
@@ -244,7 +244,7 @@ def redirect_to_content_dashboard():
 @app.route('/redirect_to_proofread_dashboard')
 def redirect_to_proofread_dashboard():
     import time
-    if not session.get('logged_in') or session.get('user_role') != 'Proofreader':
+    if not session.get('logged_in') or session.get('user_role') != 'proofreader':
         app.logger.warning("Unauthorized request to redirect_to_proofread_dashboard.")
         return redirect(url_for('login'))
 
