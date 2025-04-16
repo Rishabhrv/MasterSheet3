@@ -244,12 +244,12 @@ tr:hover {
             </li>
                 {% endif %}
             <li class="nav-item"> 
-                {% if session['user_role'] == 'Content Writer' %}
+                {% if session['user_role'] == 'Writer' %}
                 <a class="nav-link" href="{{ url_for('redirect_to_content_dashboard') }}" target="_blank" style="color:white;">Dashboard</a>
             </li>
                 {% endif %}
             <li class="nav-item"> 
-                {% if session['user_role'] == 'Proofreader' %}
+                {% if session['user_role'] == 'proofreader' %}
                 <a class="nav-link" href="{{ url_for('redirect_to_proofread_dashboard') }}" target="_blank" style="color:white;">Dashboard</a>
             </li>
                 {% endif %}
